@@ -87,11 +87,11 @@
    ============================================================ */
 const firebaseConfig = {
   apiKey: "AIzaSyDX_7HKuibEkjrZ4BtPtLlQar14QCEzCAM",
-authDomain: "presencefreelance.firebaseapp.com",
-projectId: "presencefreelance",
-storageBucket: "presencefreelance.firebasestorage.app",
-messagingSenderId: "906210160696",
-appId: "1:906210160696:web:3aa223387fe90583c176cd"
+  authDomain: "presencefreelance.firebaseapp.com",
+  projectId: "presencefreelance",
+  storageBucket: "presencefreelance.firebasestorage.app",
+  messagingSenderId: "906210160696",
+  appId: "1:906210160696:web:3aa223387fe90583c176cd"
 };
 const ADMIN_CODE = "1234"; // à personnaliser
 
@@ -129,6 +129,7 @@ function currentBaseUrl(){ return window.location.href.split("#")[0]; }
 // ---------- Firestore helpers ----------
 async function getEvent(id){ try{ const snap = await fs.getDoc(fs.doc(db,"events",id)); return snap.exists()?snap.data():null; }catch(e){ console.error(e); return null; } }
 async function saveEvent(id, data){ try{ await fs.setDoc(fs.doc(db,"events",id), data); return true; }catch(e){ console.error(e); return false; } }
+async function deleteEventDoc(id){ try{ await fs.deleteDoc(fs.doc(db,"events",id)); return true; }catch(e){ console.error(e); return false; } }
 async function loadEvents(){
   try{
     const snap = await fs.getDocs(fs.collection(db,"events"));
@@ -315,10 +316,37 @@ async function renderAdmin(){
       </div>
       <button class="btn-primary" id="createEv">Créer l'événement</button>
     </div>
-    <div class="card"><h2>Événements</h2><div id="eventsList" class="muted">Chargement…</div></div>
+    <div class="card">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+        <h2 style="margin:0;">Événements</h2>
+        <div style="display:flex;gap:8px;">
+          <button class="btn-ghost btn-sm" id="toggleListBtn">Masquer ▾</button>
+          <button class="btn-ghost btn-sm" id="toggleTrashBtn">Corbeille</button>
+        </div>
+      </div>
+      <div id="eventsList" class="muted" style="margin-top:14px;">Chargement…</div>
+      <div id="trashList" style="margin-top:14px;display:none;"></div>
+    </div>
     <div id="recordsSection"></div>`;
   document.getElementById("createEv").onclick = createEvent;
   autoSlashDate(document.getElementById("evDate"));
+
+  const listEl = document.getElementById("eventsList");
+  const toggleListBtn = document.getElementById("toggleListBtn");
+  toggleListBtn.onclick = ()=>{
+    const hidden = listEl.style.display === "none";
+    listEl.style.display = hidden ? "block" : "none";
+    toggleListBtn.textContent = hidden ? "Masquer ▾" : "Afficher ▸";
+  };
+  const trashEl = document.getElementById("trashList");
+  const toggleTrashBtn = document.getElementById("toggleTrashBtn");
+  toggleTrashBtn.onclick = async ()=>{
+    const hidden = trashEl.style.display === "none";
+    trashEl.style.display = hidden ? "block" : "none";
+    toggleTrashBtn.textContent = hidden ? "Fermer la corbeille" : "Corbeille";
+    if(hidden) await refreshTrashList();
+  };
+
   await refreshEventsList();
 }
 
@@ -329,7 +357,7 @@ async function createEvent(){
   if(dateInput && !parseDateFR(dateInput)){ showToast("Format de date invalide — utilisez JJ/MM/AAAA"); return; }
   const date = parseDateFR(dateInput) || todayStr();
   const id = slugify(name)+"-"+Date.now().toString(36);
-  const ev = { id, name, date, createdAt: Date.now() };
+  const ev = { id, name, date, createdAt: Date.now(), archived: false };
   const ok = await saveEvent(id, ev);
   if(ok){ document.getElementById("evName").value=""; showToast("Événement créé"); await refreshEventsList(); }
   else showToast("Erreur lors de la création — vérifiez votre configuration Firebase");
@@ -337,8 +365,9 @@ async function createEvent(){
 
 async function refreshEventsList(){
   const container = document.getElementById("eventsList");
-  const events = await loadEvents();
-  if(events.length===0){ container.innerHTML = `<p class="muted">Aucun événement pour l'instant. Créez-en un ci-dessus.</p>`; return; }
+  const all = await loadEvents();
+  const events = all.filter(ev => !ev.archived);
+  if(events.length===0){ container.innerHTML = `<p class="muted">Aucun événement actif. Créez-en un ci-dessus, ou consultez la corbeille.</p>`; return; }
   container.innerHTML = events.map(ev => `
     <div class="event-item">
       <div class="qr-box"><div id="qr-${ev.id}"></div></div>
@@ -347,11 +376,62 @@ async function refreshEventsList(){
         <div class="event-date">${fmtDateFR(ev.date)}</div>
         <div class="link-row"><code>${esc(currentBaseUrl())}#e=${esc(ev.id)}</code><button class="btn-ghost btn-sm" data-copy="${esc(currentBaseUrl())}#e=${esc(ev.id)}">Copier</button></div>
       </div>
-      <button class="btn-accent btn-sm" data-view="${ev.id}">Voir les présences</button>
+      <div style="display:flex;flex-direction:column;gap:6px;">
+        <button class="btn-accent btn-sm" data-view="${ev.id}">Voir les présences</button>
+        <button class="btn-ghost btn-sm" data-archive="${ev.id}">Mettre à la corbeille</button>
+      </div>
     </div>`).join("");
   events.forEach(ev => { const el=document.getElementById("qr-"+ev.id); if(el) new QRCode(el,{text:currentBaseUrl()+"#e="+ev.id,width:96,height:96,colorDark:"#16221D",colorLight:"#ffffff"}); });
   container.querySelectorAll("[data-copy]").forEach(btn=>{ btn.onclick=async()=>{ try{ await navigator.clipboard.writeText(btn.dataset.copy); showToast("Lien copié"); }catch(e){ showToast("Impossible de copier — sélectionnez le lien manuellement"); } }; });
   container.querySelectorAll("[data-view]").forEach(btn=>{ btn.onclick=()=> showRecords(btn.dataset.view, events.find(e=>e.id===btn.dataset.view)); });
+  container.querySelectorAll("[data-archive]").forEach(btn=>{
+    btn.onclick = async ()=>{
+      const ev = events.find(e=>e.id===btn.dataset.archive);
+      if(!ev) return;
+      ev.archived = true;
+      const ok = await saveEvent(ev.id, ev);
+      if(ok){ showToast("Événement mis à la corbeille"); await refreshEventsList(); }
+      else showToast("Erreur");
+    };
+  });
+}
+
+async function refreshTrashList(){
+  const trashEl = document.getElementById("trashList");
+  trashEl.innerHTML = `<p class="muted">Chargement…</p>`;
+  const all = await loadEvents();
+  const archived = all.filter(ev => ev.archived);
+  if(archived.length===0){ trashEl.innerHTML = `<p class="muted">La corbeille est vide.</p>`; return; }
+  trashEl.innerHTML = `<p class="muted" style="margin-bottom:10px;">Événements archivés — les présences déjà enregistrées restent conservées.</p>` +
+    archived.map(ev => `
+    <div class="event-item">
+      <div class="event-info">
+        <div class="event-name">${esc(ev.name)}</div>
+        <div class="event-date">${fmtDateFR(ev.date)}</div>
+      </div>
+      <div style="display:flex;gap:8px;">
+        <button class="btn-accent btn-sm" data-restore="${ev.id}">Restaurer</button>
+        <button class="btn-ghost btn-sm" data-delete-ev="${ev.id}" style="color:var(--stamp);border-color:var(--stamp);">Supprimer définitivement</button>
+      </div>
+    </div>`).join("");
+  trashEl.querySelectorAll("[data-restore]").forEach(btn=>{
+    btn.onclick = async ()=>{
+      const ev = archived.find(e=>e.id===btn.dataset.restore);
+      if(!ev) return;
+      ev.archived = false;
+      const ok = await saveEvent(ev.id, ev);
+      if(ok){ showToast("Événement restauré"); await refreshTrashList(); await refreshEventsList(); }
+      else showToast("Erreur");
+    };
+  });
+  trashEl.querySelectorAll("[data-delete-ev]").forEach(btn=>{
+    btn.onclick = async ()=>{
+      if(!confirm("Supprimer définitivement cet événement ? Cette action est irréversible (les présences déjà enregistrées ne seront pas supprimées).")) return;
+      const ok = await deleteEventDoc(btn.dataset.deleteEv);
+      if(ok){ showToast("Événement supprimé"); await refreshTrashList(); }
+      else showToast("Erreur");
+    };
+  });
 }
 
 async function showRecords(eventId, ev){
