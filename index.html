@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Registre de présence</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+  :root{
+    --paper:#EDECE6; --paper-line:#d8d6cc; --ink:#16221D; --ink-soft:#4b564f;
+    --stamp:#8B3A2F; --stamp-soft:#f1ded9; --accent:#2F6F5E; --accent-soft:#dde9e4;
+    --white:#FBFBF8; --radius:10px; --shadow:0 1px 2px rgba(22,34,29,.06), 0 8px 24px rgba(22,34,29,.06);
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;min-height:100vh;background:var(--paper);background-image:linear-gradient(var(--paper-line) 1px, transparent 1px);background-size:100% 42px;font-family:'Inter',sans-serif;color:var(--ink);padding:0 0 60px;}
+  .wrap{max-width:880px;margin:0 auto;padding:28px 20px;}
+  header.top{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:6px;flex-wrap:wrap;gap:8px;}
+  .brand{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:22px;letter-spacing:-0.02em;}
+  .brand span{color:var(--stamp);}
+  .tag{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--ink-soft);letter-spacing:.06em;text-transform:uppercase;}
+  .card{background:var(--white);border:1px solid var(--paper-line);border-radius:var(--radius);box-shadow:var(--shadow);padding:22px;margin-bottom:18px;}
+  h2{font-family:'Space Grotesk',sans-serif;font-size:17px;margin:0 0 14px;font-weight:700;}
+  label{display:block;font-family:'IBM Plex Mono',monospace;font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-soft);margin-bottom:5px;}
+  input[type=text],input[type=date],input[type=time]{width:100%;padding:11px 12px;border:1px solid #cfcdc2;border-radius:7px;font-family:'Inter',sans-serif;font-size:15px;background:#fff;color:var(--ink);}
+  input:focus{outline:2px solid var(--accent);outline-offset:1px;}
+  .field{margin-bottom:14px;}
+  .row{display:flex;gap:12px;flex-wrap:wrap;}
+  .row > .field{flex:1;min-width:160px;}
+  button{font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:12.5px;letter-spacing:.03em;text-transform:uppercase;border:none;border-radius:7px;padding:12px 18px;cursor:pointer;transition:transform .05s ease;}
+  button:active{transform:scale(.98);}
+  button:disabled{opacity:.5;cursor:not-allowed;}
+  .btn-primary{background:var(--ink);color:var(--white);}
+  .btn-primary:hover{background:#233329;}
+  .btn-accent{background:var(--accent);color:#fff;}
+  .btn-accent:hover{background:#255a4c;}
+  .btn-stamp{background:var(--stamp);color:#fff;}
+  .btn-stamp:hover{background:#733029;}
+  .btn-ghost{background:transparent;color:var(--ink-soft);border:1px solid #cfcdc2;}
+  .btn-ghost:hover{background:#f2f1eb;}
+  .btn-sm{padding:7px 11px;font-size:11px;}
+  .tabs{display:flex;gap:8px;margin-bottom:18px;}
+  .tabs button{flex:1;}
+  .muted{color:var(--ink-soft);font-size:13.5px;line-height:1.5;}
+  canvas.sigpad{width:100%;height:150px;border:1.5px dashed #b9b6a8;border-radius:8px;background:#fff;touch-action:none;display:block;}
+  .sig-actions{display:flex;justify-content:space-between;align-items:center;margin-top:8px;}
+  table{width:100%;border-collapse:collapse;font-size:13px;}
+  th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--paper-line);vertical-align:middle;}
+  th{font-family:'IBM Plex Mono',monospace;font-size:10.5px;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-soft);}
+  td input[type=time]{width:96px;padding:6px 8px;font-size:13px;}
+  .sig-thumb{width:64px;height:28px;object-fit:contain;background:#fff;border:1px solid var(--paper-line);border-radius:4px;cursor:zoom-in;}
+  .event-item{border:1px solid var(--paper-line);border-radius:8px;padding:14px;margin-bottom:10px;display:flex;gap:16px;align-items:center;flex-wrap:wrap;}
+  .event-info{flex:1;min-width:180px;}
+  .event-name{font-weight:600;font-size:15px;}
+  .event-date{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--ink-soft);}
+  .qr-box{background:#fff;padding:6px;border-radius:6px;border:1px solid var(--paper-line);}
+  .link-row{display:flex;gap:8px;align-items:center;margin-top:6px;}
+  .link-row code{font-family:'IBM Plex Mono',monospace;font-size:11px;background:#f2f1eb;padding:4px 7px;border-radius:5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:220px;}
+  .stamp-mark{font-family:'Space Grotesk',sans-serif;font-weight:700;color:var(--stamp);border:2.5px solid var(--stamp);display:inline-block;padding:10px 18px;border-radius:8px;transform:rotate(-3deg);letter-spacing:.05em;text-transform:uppercase;font-size:15px;background:var(--stamp-soft);}
+  .center{text-align:center;}
+  .toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:11px 18px;border-radius:8px;font-size:13.5px;font-family:'Inter',sans-serif;box-shadow:var(--shadow);z-index:50;opacity:0;transition:opacity .2s ease;}
+  .toast.show{opacity:1;}
+  .backlink{font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:var(--ink-soft);text-decoration:none;cursor:pointer;}
+  .backlink:hover{color:var(--ink);}
+  .modal-bg{position:fixed;inset:0;background:rgba(22,34,29,.55);display:flex;align-items:center;justify-content:center;z-index:60;padding:20px;}
+  .modal{background:#fff;border-radius:10px;padding:20px;max-width:420px;width:100%;}
+  pre.codeblock{background:#182620;color:#e7f2ec;padding:14px;border-radius:8px;font-family:'IBM Plex Mono',monospace;font-size:11.5px;overflow-x:auto;line-height:1.6;}
+  ::placeholder{color:#b7b4a6;}
+  @media (max-width:520px){ .wrap{padding:18px 12px;} }
+</style>
+</head>
+<body>
+<div id="app" class="wrap"></div>
+<div id="toast" class="toast"></div>
+
+<script type="module">
+/* ============================================================
+   CONFIGURATION FIREBASE — à remplir une seule fois
+   1. Allez sur https://console.firebase.google.com
+   2. Créez un projet (gratuit)
+   3. Ajoutez une application "Web" au projet
+   4. Copiez ici les valeurs qu'on vous donne
+   5. Activez "Firestore Database" dans le menu du projet (mode production)
+   6. Dans Firestore > Règles, collez les règles fournies dans le chat
+   ============================================================ */
+const firebaseConfig = {
+  apiKey: "AIzaSyDX_7HKuibEkjrZ4BtPtLlQar14QCEzCAM",
+authDomain: "presencefreelance.firebaseapp.com",
+projectId: "presencefreelance",
+storageBucket: "presencefreelance.firebasestorage.app",
+messagingSenderId: "906210160696",
+appId: "1:906210160696:web:3aa223387fe90583c176cd"
+};
+const ADMIN_CODE = "1234"; // à personnaliser
+
+const isConfigured = firebaseConfig.apiKey && firebaseConfig.apiKey !== "VOTRE_API_KEY";
+
+let db = null;
+let fs = null; // firestore functions namespace
+if(isConfigured){
+  const { initializeApp } = await import("https://www.gstatic.com/firebasejs/10.13.2/firebase-app.js");
+  fs = await import("https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js");
+  const app = initializeApp(firebaseConfig);
+  db = fs.getFirestore(app);
+}
+
+let adminAuthed = false;
+let sigPadCtx = null, sigDrawing = false, sigHasContent = false;
+
+function esc(s){ return (s||"").replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function slugify(s){ return (s||"").toString().normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/(^-|-$)/g,""); }
+function todayStr(){ const d=new Date(); return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
+function fmtDateFR(iso){ if(!iso) return ""; const [y,m,d]=iso.split("-"); return `${d}/${m}/${y}`; }
+function parseDateFR(str){ const m=(str||"").trim().match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/); if(!m) return null; return `${m[3]}-${m[2].padStart(2,"0")}-${m[1].padStart(2,"0")}`; }
+function autoSlashDate(input){
+  input.addEventListener("input", ()=>{
+    let v = input.value.replace(/[^\d]/g,"").slice(0,8);
+    if(v.length>=5) v=v.slice(0,2)+"/"+v.slice(2,4)+"/"+v.slice(4);
+    else if(v.length>=3) v=v.slice(0,2)+"/"+v.slice(2);
+    input.value=v;
+  });
+}
+function nowTimeStr(){ const d=new Date(); return String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0"); }
+function showToast(msg){ const t=document.getElementById("toast"); t.textContent=msg; t.classList.add("show"); clearTimeout(showToast._to); showToast._to=setTimeout(()=>t.classList.remove("show"),2600); }
+function currentBaseUrl(){ return window.location.href.split("#")[0]; }
+
+// ---------- Firestore helpers ----------
+async function getEvent(id){ try{ const snap = await fs.getDoc(fs.doc(db,"events",id)); return snap.exists()?snap.data():null; }catch(e){ console.error(e); return null; } }
+async function saveEvent(id, data){ try{ await fs.setDoc(fs.doc(db,"events",id), data); return true; }catch(e){ console.error(e); return false; } }
+async function loadEvents(){
+  try{
+    const snap = await fs.getDocs(fs.collection(db,"events"));
+    const events = snap.docs.map(d=>d.data());
+    events.sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
+    return events;
+  }catch(e){ console.error(e); return []; }
+}
+async function getRecord(key){ try{ const snap = await fs.getDoc(fs.doc(db,"records",key)); return snap.exists()?snap.data():null; }catch(e){ console.error(e); return null; } }
+async function saveRecord(key, data){ try{ await fs.setDoc(fs.doc(db,"records",key), data); return true; }catch(e){ console.error(e); return false; } }
+async function loadRecords(eventId){
+  try{
+    const q = fs.query(fs.collection(db,"records"), fs.where("eventId","==",eventId));
+    const snap = await fs.getDocs(q);
+    const recs = snap.docs.map(d=>d.data());
+    recs.sort((a,b)=>(a.arriveeTs||0)-(b.arriveeTs||0));
+    return recs;
+  }catch(e){ console.error(e); return []; }
+}
+
+// ---------- Router ----------
+window.addEventListener("hashchange", render);
+window.addEventListener("DOMContentLoaded", render);
+
+function render(){
+  if(!isConfigured){ renderSetupNeeded(); return; }
+  const hash = window.location.hash;
+  const m = hash.match(/^#e=(.+)$/);
+  if(m) renderSign(decodeURIComponent(m[1]));
+  else renderAdmin();
+}
+
+function renderSetupNeeded(){
+  document.getElementById("app").innerHTML = `
+    <header class="top"><div class="brand">Registre<span>·</span></div></header>
+    <div class="card">
+      <h2>Configuration requise</h2>
+      <p class="muted">Cette app a besoin d'être reliée à votre base Firebase (gratuite) avant de fonctionner. Ouvrez le fichier .html, repérez le bloc <code>firebaseConfig</code> tout en haut du script, et remplacez les valeurs par celles de votre projet Firebase.</p>
+      <p class="muted">Retournez ensuite dans votre conversation avec Claude si vous avez besoin d'aide pour cette étape.</p>
+    </div>`;
+}
+
+// ---------- Signing view (freelance) ----------
+async function renderSign(eventId){
+  const app = document.getElementById("app");
+  app.innerHTML = `<div class="center muted" style="padding-top:60px;">Chargement…</div>`;
+  const ev = await getEvent(eventId);
+  if(!ev){
+    app.innerHTML = `<div class="card center"><div class="tag">Registre de présence</div><h2>Événement introuvable</h2><p class="muted">Ce lien n'est plus valide. Merci de contacter l'organisateur.</p></div>`;
+    return;
+  }
+  app.innerHTML = `
+    <header class="top"><div class="brand">Registre<span>·</span></div><div class="tag">${esc(ev.name)} — ${fmtDateFR(ev.date)}</div></header>
+    <div class="tabs">
+      <button id="tabIn" class="btn-accent">J'arrive</button>
+      <button id="tabOut" class="btn-ghost">Je pars</button>
+    </div>
+    <div id="signBody"></div>`;
+  document.getElementById("tabIn").onclick=()=>{ document.getElementById("tabIn").className="btn-accent"; document.getElementById("tabOut").className="btn-ghost"; renderArrivalForm(ev); };
+  document.getElementById("tabOut").onclick=()=>{ document.getElementById("tabOut").className="btn-accent"; document.getElementById("tabIn").className="btn-ghost"; renderDepartForm(ev); };
+  renderArrivalForm(ev);
+}
+
+function renderArrivalForm(ev){
+  const body = document.getElementById("signBody");
+  body.innerHTML = `
+    <div class="card">
+      <h2>Enregistrer mon arrivée</h2>
+      <div class="row">
+        <div class="field"><label>Nom</label><input type="text" id="fNom" autocomplete="family-name"></div>
+        <div class="field"><label>Prénom</label><input type="text" id="fPrenom" autocomplete="given-name"></div>
+      </div>
+      <div class="field">
+        <label>Signature</label>
+        <canvas id="sigPad" class="sigpad"></canvas>
+        <div class="sig-actions"><span class="muted" style="font-size:12px;">Signez avec le doigt</span><button class="btn-ghost btn-sm" id="clearSig">Effacer</button></div>
+      </div>
+      <p class="muted" style="font-size:12px;">L'heure d'arrivée sera enregistrée automatiquement et ne pourra pas être modifiée par vous-même.</p>
+      <button class="btn-stamp" id="submitIn" style="width:100%;margin-top:6px;">Signer et enregistrer l'arrivée</button>
+    </div>`;
+  initSigPad(document.getElementById("sigPad"));
+  document.getElementById("clearSig").onclick = clearSigPad;
+  document.getElementById("submitIn").onclick = ()=> submitArrival(ev);
+}
+
+function renderDepartForm(ev){
+  const body = document.getElementById("signBody");
+  body.innerHTML = `
+    <div class="card">
+      <h2>Enregistrer mon départ</h2>
+      <div class="row">
+        <div class="field"><label>Nom</label><input type="text" id="fNomOut" autocomplete="family-name"></div>
+        <div class="field"><label>Prénom</label><input type="text" id="fPrenomOut" autocomplete="given-name"></div>
+      </div>
+      <p class="muted" style="font-size:12px;">Nous retrouvons votre enregistrement d'arrivée du jour et ajoutons l'heure actuelle comme heure de départ.</p>
+      <button class="btn-stamp" id="submitOut" style="width:100%;margin-top:6px;">Enregistrer mon départ</button>
+    </div>`;
+  document.getElementById("submitOut").onclick = ()=> submitDepart(ev);
+}
+
+function initSigPad(canvas){
+  const ratio = window.devicePixelRatio || 1;
+  canvas.width = (canvas.clientWidth||300)*ratio;
+  canvas.height = 150*ratio;
+  const ctx = canvas.getContext("2d");
+  ctx.scale(ratio, ratio);
+  ctx.lineWidth = 2.2; ctx.lineCap = "round"; ctx.strokeStyle = "#16221D";
+  sigPadCtx = ctx; sigHasContent = false; sigDrawing = false;
+  function pos(e){ const r=canvas.getBoundingClientRect(); const p=e.touches?e.touches[0]:e; return {x:p.clientX-r.left,y:p.clientY-r.top}; }
+  function start(e){ sigDrawing=true; sigHasContent=true; const p=pos(e); ctx.beginPath(); ctx.moveTo(p.x,p.y); e.preventDefault(); }
+  function move(e){ if(!sigDrawing) return; const p=pos(e); ctx.lineTo(p.x,p.y); ctx.stroke(); e.preventDefault(); }
+  function end(){ sigDrawing=false; }
+  canvas.addEventListener("mousedown",start); canvas.addEventListener("mousemove",move); window.addEventListener("mouseup",end);
+  canvas.addEventListener("touchstart",start,{passive:false}); canvas.addEventListener("touchmove",move,{passive:false}); canvas.addEventListener("touchend",end);
+}
+function clearSigPad(){
+  const canvas = document.getElementById("sigPad");
+  if(!canvas || !sigPadCtx) return;
+  sigPadCtx.clearRect(0,0,canvas.width,canvas.height);
+  sigHasContent = false;
+}
+
+async function submitArrival(ev){
+  const nom = document.getElementById("fNom").value.trim();
+  const prenom = document.getElementById("fPrenom").value.trim();
+  if(!nom || !prenom){ showToast("Merci de renseigner nom et prénom"); return; }
+  if(!sigHasContent){ showToast("Merci de signer avant de valider"); return; }
+  const date = todayStr();
+  const slug = slugify(nom)+"-"+slugify(prenom);
+  const key = ev.id+"_"+date+"_"+slug;
+  const existing = await getRecord(key);
+  if(existing && existing.heureArrivee){ showToast(`Déjà enregistré aujourd'hui à ${existing.heureArrivee}`); return; }
+  const canvas = document.getElementById("sigPad");
+  const signature = canvas.toDataURL("image/png");
+  const record = { id:key, eventId:ev.id, eventName:ev.name, nom, prenom, date, signature, heureArrivee: nowTimeStr(), arriveeTs: Date.now(), heureDepart: null, departTs: null };
+  const ok = await saveRecord(key, record);
+  if(ok){
+    document.getElementById("signBody").innerHTML = `<div class="card center"><div class="stamp-mark">Arrivée enregistrée</div><p class="muted" style="margin-top:16px;">${esc(prenom)} ${esc(nom)} — ${record.heureArrivee}</p></div>`;
+  } else showToast("Erreur d'enregistrement, réessayez");
+}
+
+async function submitDepart(ev){
+  const nom = document.getElementById("fNomOut").value.trim();
+  const prenom = document.getElementById("fPrenomOut").value.trim();
+  if(!nom || !prenom){ showToast("Merci de renseigner nom et prénom"); return; }
+  const date = todayStr();
+  const slug = slugify(nom)+"-"+slugify(prenom);
+  const key = ev.id+"_"+date+"_"+slug;
+  const existing = await getRecord(key);
+  if(!existing){ showToast("Aucune arrivée trouvée aujourd'hui à ce nom — signez d'abord votre arrivée"); return; }
+  if(existing.heureDepart){ showToast(`Départ déjà enregistré à ${existing.heureDepart}`); return; }
+  existing.heureDepart = nowTimeStr();
+  existing.departTs = Date.now();
+  const ok = await saveRecord(key, existing);
+  if(ok){
+    document.getElementById("signBody").innerHTML = `<div class="card center"><div class="stamp-mark">Départ enregistré</div><p class="muted" style="margin-top:16px;">${esc(prenom)} ${esc(nom)} — ${existing.heureDepart}</p></div>`;
+  } else showToast("Erreur d'enregistrement, réessayez");
+}
+
+// ---------- Admin view ----------
+async function renderAdmin(){
+  const app = document.getElementById("app");
+  if(!adminAuthed){
+    app.innerHTML = `
+      <header class="top"><div class="brand">Registre<span>·</span> Admin</div></header>
+      <div class="card" style="max-width:360px;">
+        <h2>Accès organisateur</h2>
+        <div class="field"><label>Code d'accès</label><input type="text" id="pw" placeholder="••••"></div>
+        <button class="btn-primary" id="pwBtn" style="width:100%;">Entrer</button>
+      </div>`;
+    document.getElementById("pwBtn").onclick = ()=>{
+      if(document.getElementById("pw").value === ADMIN_CODE){ adminAuthed=true; renderAdmin(); }
+      else showToast("Code incorrect");
+    };
+    return;
+  }
+  app.innerHTML = `
+    <header class="top"><div class="brand">Registre<span>·</span> Admin</div><div class="tag">Gestion des événements</div></header>
+    <div class="card">
+      <h2>Nouvel événement</h2>
+      <div class="row">
+        <div class="field"><label>Nom de l'événement</label><input type="text" id="evName" placeholder="Ex. Salon du 12 août"></div>
+        <div class="field"><label>Date</label><input type="text" id="evDate" placeholder="JJ/MM/AAAA" value="${fmtDateFR(todayStr())}" inputmode="numeric" maxlength="10"></div>
+      </div>
+      <button class="btn-primary" id="createEv">Créer l'événement</button>
+    </div>
+    <div class="card"><h2>Événements</h2><div id="eventsList" class="muted">Chargement…</div></div>
+    <div id="recordsSection"></div>`;
+  document.getElementById("createEv").onclick = createEvent;
+  autoSlashDate(document.getElementById("evDate"));
+  await refreshEventsList();
+}
+
+async function createEvent(){
+  const name = document.getElementById("evName").value.trim();
+  const dateInput = document.getElementById("evDate").value.trim();
+  if(!name){ showToast("Merci de nommer l'événement"); return; }
+  if(dateInput && !parseDateFR(dateInput)){ showToast("Format de date invalide — utilisez JJ/MM/AAAA"); return; }
+  const date = parseDateFR(dateInput) || todayStr();
+  const id = slugify(name)+"-"+Date.now().toString(36);
+  const ev = { id, name, date, createdAt: Date.now() };
+  const ok = await saveEvent(id, ev);
+  if(ok){ document.getElementById("evName").value=""; showToast("Événement créé"); await refreshEventsList(); }
+  else showToast("Erreur lors de la création — vérifiez votre configuration Firebase");
+}
+
+async function refreshEventsList(){
+  const container = document.getElementById("eventsList");
+  const events = await loadEvents();
+  if(events.length===0){ container.innerHTML = `<p class="muted">Aucun événement pour l'instant. Créez-en un ci-dessus.</p>`; return; }
+  container.innerHTML = events.map(ev => `
+    <div class="event-item">
+      <div class="qr-box"><div id="qr-${ev.id}"></div></div>
+      <div class="event-info">
+        <div class="event-name">${esc(ev.name)}</div>
+        <div class="event-date">${fmtDateFR(ev.date)}</div>
+        <div class="link-row"><code>${esc(currentBaseUrl())}#e=${esc(ev.id)}</code><button class="btn-ghost btn-sm" data-copy="${esc(currentBaseUrl())}#e=${esc(ev.id)}">Copier</button></div>
+      </div>
+      <button class="btn-accent btn-sm" data-view="${ev.id}">Voir les présences</button>
+    </div>`).join("");
+  events.forEach(ev => { const el=document.getElementById("qr-"+ev.id); if(el) new QRCode(el,{text:currentBaseUrl()+"#e="+ev.id,width:96,height:96,colorDark:"#16221D",colorLight:"#ffffff"}); });
+  container.querySelectorAll("[data-copy]").forEach(btn=>{ btn.onclick=async()=>{ try{ await navigator.clipboard.writeText(btn.dataset.copy); showToast("Lien copié"); }catch(e){ showToast("Impossible de copier — sélectionnez le lien manuellement"); } }; });
+  container.querySelectorAll("[data-view]").forEach(btn=>{ btn.onclick=()=> showRecords(btn.dataset.view, events.find(e=>e.id===btn.dataset.view)); });
+}
+
+async function showRecords(eventId, ev){
+  const section = document.getElementById("recordsSection");
+  section.innerHTML = `<div class="card center muted">Chargement des présences…</div>`;
+  const records = await loadRecords(eventId);
+  section.innerHTML = `
+    <div class="card">
+      <h2>Présences — ${esc(ev.name)} (${fmtDateFR(ev.date)})</h2>
+      ${records.length===0 ? `<p class="muted">Aucune présence enregistrée pour cet événement.</p>` : `
+      <table>
+        <thead><tr><th>Nom</th><th>Prénom</th><th>Date</th><th>Signature</th><th>Arrivée</th><th>Départ</th><th></th></tr></thead>
+        <tbody id="recTable">
+          ${records.map(r => `
+            <tr data-key="${esc(r.id)}">
+              <td>${esc(r.nom)}</td><td>${esc(r.prenom)}</td><td>${fmtDateFR(r.date)}</td>
+              <td><img class="sig-thumb" src="${r.signature}" data-full="${r.signature}"></td>
+              <td><input type="time" value="${r.heureArrivee||''}" data-field="heureArrivee"></td>
+              <td><input type="time" value="${r.heureDepart||''}" data-field="heureDepart"></td>
+              <td><button class="btn-ghost btn-sm" data-save="${esc(r.id)}">Enreg.</button></td>
+            </tr>`).join("")}
+        </tbody>
+      </table>`}
+      <div style="display:flex;gap:10px;margin-top:16px;flex-wrap:wrap;">
+        <button class="btn-primary" id="exportBtn">Exporter en Excel</button>
+        <a class="backlink" id="backBtn" style="align-self:center;">← Retour aux événements</a>
+      </div>
+    </div>`;
+  section.querySelectorAll("img.sig-thumb").forEach(img=>{ img.onclick=()=>openSigModal(img.dataset.full); });
+  section.querySelectorAll("[data-save]").forEach(btn=>{ btn.onclick=()=>saveRecordEdit(btn, records); });
+  document.getElementById("exportBtn").onclick = ()=> exportExcel(ev, records);
+  document.getElementById("backBtn").onclick = ()=>{ section.innerHTML=""; };
+}
+
+async function saveRecordEdit(btn, records){
+  const tr = btn.closest("tr");
+  const key = tr.dataset.key;
+  let rec = records.find(r=>r.id===key) || await getRecord(key);
+  if(!rec){ showToast("Enregistrement introuvable"); return; }
+  tr.querySelectorAll("input[data-field]").forEach(inp=>{ rec[inp.dataset.field] = inp.value || null; });
+  const ok = await saveRecord(key, rec);
+  showToast(ok ? "Heures mises à jour" : "Erreur d'enregistrement");
+}
+
+function openSigModal(src){
+  const bg = document.createElement("div");
+  bg.className = "modal-bg";
+  bg.innerHTML = `<div class="modal"><img src="${src}" style="width:100%;background:#fff;border-radius:6px;"></div>`;
+  bg.onclick = ()=> bg.remove();
+  document.body.appendChild(bg);
+}
+
+function exportExcel(ev, records){
+  const data = records.map(r => ({
+    "Nom": r.nom, "Prénom": r.prenom, "Date": fmtDateFR(r.date),
+    "Signature": r.signature ? "Signée" : "—",
+    "Heure d'arrivée": r.heureArrivee || "", "Heure de départ": r.heureDepart || "",
+  }));
+  const ws = XLSX.utils.json_to_sheet(data);
+  ws['!cols'] = [{wch:16},{wch:16},{wch:12},{wch:10},{wch:14},{wch:14}];
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Présences");
+  XLSX.writeFile(wb, `presences-${slugify(ev.name)}.xlsx`);
+}
+
+render();
+</script>
+</body>
+</html>
