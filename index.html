@@ -13,19 +13,22 @@
     --paper:#EDECE6; --paper-line:#d8d6cc; --ink:#16221D; --ink-soft:#4b564f;
     --stamp:#8B3A2F; --stamp-soft:#f1ded9; --accent:#2F6F5E; --accent-soft:#dde9e4;
     --white:#FBFBF8; --radius:10px; --shadow:0 1px 2px rgba(22,34,29,.06), 0 8px 24px rgba(22,34,29,.06);
+    --warn:#a8791f; --warn-soft:#f6ecd6;
   }
   *{box-sizing:border-box;}
   body{margin:0;min-height:100vh;background:var(--paper);background-image:linear-gradient(var(--paper-line) 1px, transparent 1px);background-size:100% 42px;font-family:'Inter',sans-serif;color:var(--ink);padding:0 0 60px;}
-  .wrap{max-width:880px;margin:0 auto;padding:28px 20px;}
+  .wrap{max-width:920px;margin:0 auto;padding:28px 20px;}
   header.top{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:6px;flex-wrap:wrap;gap:8px;}
   .brand{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:22px;letter-spacing:-0.02em;}
   .brand span{color:var(--stamp);}
   .tag{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--ink-soft);letter-spacing:.06em;text-transform:uppercase;}
   .card{background:var(--white);border:1px solid var(--paper-line);border-radius:var(--radius);box-shadow:var(--shadow);padding:22px;margin-bottom:18px;}
   h2{font-family:'Space Grotesk',sans-serif;font-size:17px;margin:0 0 14px;font-weight:700;}
+  h3{font-family:'Space Grotesk',sans-serif;font-size:14px;margin:0 0 10px;font-weight:700;}
   label{display:block;font-family:'IBM Plex Mono',monospace;font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-soft);margin-bottom:5px;}
-  input[type=text],input[type=date],input[type=time]{width:100%;padding:11px 12px;border:1px solid #cfcdc2;border-radius:7px;font-family:'Inter',sans-serif;font-size:15px;background:#fff;color:var(--ink);}
-  input:focus{outline:2px solid var(--accent);outline-offset:1px;}
+  input[type=text],input[type=date],input[type=time],select,textarea{width:100%;padding:11px 12px;border:1px solid #cfcdc2;border-radius:7px;font-family:'Inter',sans-serif;font-size:15px;background:#fff;color:var(--ink);}
+  textarea{resize:vertical;min-height:70px;}
+  input:focus,select:focus,textarea:focus{outline:2px solid var(--accent);outline-offset:1px;}
   .field{margin-bottom:14px;}
   .row{display:flex;gap:12px;flex-wrap:wrap;}
   .row > .field{flex:1;min-width:160px;}
@@ -41,6 +44,7 @@
   .btn-ghost{background:transparent;color:var(--ink-soft);border:1px solid #cfcdc2;}
   .btn-ghost:hover{background:#f2f1eb;}
   .btn-sm{padding:7px 11px;font-size:11px;}
+  .btn-role{width:100%;padding:18px;font-size:13.5px;margin-bottom:10px;text-align:left;}
   .tabs{display:flex;gap:8px;margin-bottom:18px;}
   .tabs button{flex:1;}
   .muted{color:var(--ink-soft);font-size:13.5px;line-height:1.5;}
@@ -49,7 +53,7 @@
   table{width:100%;border-collapse:collapse;font-size:13px;}
   th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--paper-line);vertical-align:middle;}
   th{font-family:'IBM Plex Mono',monospace;font-size:10.5px;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-soft);}
-  td input[type=time]{width:96px;padding:6px 8px;font-size:13px;}
+  td select,td input[type=time],td input[type=text]{width:100px;padding:6px 8px;font-size:13px;}
   .sig-thumb{width:64px;height:28px;object-fit:contain;background:#fff;border:1px solid var(--paper-line);border-radius:4px;cursor:zoom-in;}
   .event-item{border:1px solid var(--paper-line);border-radius:8px;padding:14px;margin-bottom:10px;display:flex;gap:16px;align-items:center;flex-wrap:wrap;}
   .event-info{flex:1;min-width:180px;}
@@ -66,7 +70,8 @@
   .backlink:hover{color:var(--ink);}
   .modal-bg{position:fixed;inset:0;background:rgba(22,34,29,.55);display:flex;align-items:center;justify-content:center;z-index:60;padding:20px;}
   .modal{background:#fff;border-radius:10px;padding:20px;max-width:420px;width:100%;}
-  pre.codeblock{background:#182620;color:#e7f2ec;padding:14px;border-radius:8px;font-family:'IBM Plex Mono',monospace;font-size:11.5px;overflow-x:auto;line-height:1.6;}
+  .recup-box{background:var(--accent-soft);border:1px solid var(--accent);border-radius:8px;padding:14px;margin-top:14px;font-size:13.5px;line-height:1.7;}
+  .warn-box{background:var(--warn-soft);border:1px solid var(--warn);color:#5c421a;border-radius:8px;padding:10px 12px;font-size:12.5px;margin-top:10px;}
   ::placeholder{color:#b7b4a6;}
   @media (max-width:520px){ .wrap{padding:18px 12px;} }
 </style>
@@ -77,13 +82,7 @@
 
 <script type="module">
 /* ============================================================
-   CONFIGURATION FIREBASE — à remplir une seule fois
-   1. Allez sur https://console.firebase.google.com
-   2. Créez un projet (gratuit)
-   3. Ajoutez une application "Web" au projet
-   4. Copiez ici les valeurs qu'on vous donne
-   5. Activez "Firestore Database" dans le menu du projet (mode production)
-   6. Dans Firestore > Règles, collez les règles fournies dans le chat
+   CONFIGURATION — à remplir une seule fois
    ============================================================ */
 const firebaseConfig = {
   apiKey: "AIzaSyDX_7HKuibEkjrZ4BtPtLlQar14QCEzCAM",
@@ -95,20 +94,23 @@ const firebaseConfig = {
 };
 const ADMIN_CODE = "1234"; // à personnaliser
 
-const isConfigured = firebaseConfig.apiKey && firebaseConfig.apiKey !== "VOTRE_API_KEY";
+// Colle ici l'URL de ton Google Apps Script Web App pour activer la synchro Google Sheet.
+// Laisse vide ("") pour désactiver la synchro — l'app fonctionne normalement sans.
+const GOOGLE_SHEETS_URL = "";
 
-let db = null;
-let fs = null; // firestore functions namespace
+const isConfigured = firebaseConfig.apiKey && firebaseConfig.apiKey !== "VOTRE_API_KEY";
+let db = null, fs = null;
 if(isConfigured){
   const { initializeApp } = await import("https://www.gstatic.com/firebasejs/10.13.2/firebase-app.js");
   fs = await import("https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js");
-  const app = initializeApp(firebaseConfig);
-  db = fs.getFirestore(app);
+  db = fs.getFirestore(initializeApp(firebaseConfig));
 }
 
 let adminAuthed = false;
 let sigPadCtx = null, sigDrawing = false, sigHasContent = false;
+let selectedRole = null; // 'staff' | 'freelance_fixe' | 'externe' | 'autre'
 
+// ---------- Utils ----------
 function esc(s){ return (s||"").replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 function slugify(s){ return (s||"").toString().normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/(^-|-$)/g,""); }
 function todayStr(){ const d=new Date(); return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
@@ -125,54 +127,165 @@ function autoSlashDate(input){
 function nowTimeStr(){ const d=new Date(); return String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0"); }
 function showToast(msg){ const t=document.getElementById("toast"); t.textContent=msg; t.classList.add("show"); clearTimeout(showToast._to); showToast._to=setTimeout(()=>t.classList.remove("show"),2600); }
 function currentBaseUrl(){ return window.location.href.split("#")[0]; }
+function buildTimeOptions(selected){
+  let opts = "";
+  for(let h=0; h<24; h++){
+    for(let m=0; m<60; m+=15){
+      const val = String(h).padStart(2,"0")+":"+String(m).padStart(2,"0");
+      opts += `<option value="${val}"${val===selected?" selected":""}>${val}</option>`;
+    }
+  }
+  return opts;
+}
+function hoursBetween(hStart,hEnd){
+  const [h1,m1]=hStart.split(":").map(Number), [h2,m2]=hEnd.split(":").map(Number);
+  let start=h1*60+m1, end=h2*60+m2;
+  if(end<start) end+=24*60;
+  return (end-start)/60;
+}
+function toMinutesTotal(dateISO,timeStr){ return new Date(dateISO+"T"+timeStr+":00").getTime()/60000; }
+function hoursDiffAcrossDates(d1,t1,d2,t2){ return (toMinutesTotal(d2,t2)-toMinutesTotal(d1,t1))/60; }
+function normalHoursForDate(dateISO){
+  const day = new Date(dateISO+"T00:00:00").getDay(); // 0=Dim, 6=Sam
+  if(day===0) return 0;
+  if(day===6) return 3;
+  return 8;
+}
+function isSundayISO(dateISO){ return new Date(dateISO+"T00:00:00").getDay()===0; }
 
-// ---------- Firestore helpers ----------
-async function getEvent(id){ try{ const snap = await fs.getDoc(fs.doc(db,"events",id)); return snap.exists()?snap.data():null; }catch(e){ console.error(e); return null; } }
-async function saveEvent(id, data){ try{ await fs.setDoc(fs.doc(db,"events",id), data); return true; }catch(e){ console.error(e); return false; } }
+async function pushToSheet(sheetName, row){
+  if(!GOOGLE_SHEETS_URL) return;
+  try{
+    await fetch(GOOGLE_SHEETS_URL, { method:"POST", mode:"no-cors", headers:{"Content-Type":"text/plain"}, body: JSON.stringify({sheet:sheetName, row}) });
+  }catch(e){ console.error("Sync Google Sheet échouée", e); }
+}
+
+// ---------- Firestore: events ----------
+async function getEvent(id){ try{ const s=await fs.getDoc(fs.doc(db,"events",id)); return s.exists()?s.data():null; }catch(e){ console.error(e); return null; } }
+async function saveEvent(id,data){ try{ await fs.setDoc(fs.doc(db,"events",id),data); return true; }catch(e){ console.error(e); return false; } }
 async function deleteEventDoc(id){ try{ await fs.deleteDoc(fs.doc(db,"events",id)); return true; }catch(e){ console.error(e); return false; } }
 async function loadEvents(){
-  try{
-    const snap = await fs.getDocs(fs.collection(db,"events"));
-    const events = snap.docs.map(d=>d.data());
-    events.sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
-    return events;
-  }catch(e){ console.error(e); return []; }
+  try{ const snap=await fs.getDocs(fs.collection(db,"events")); const ev=snap.docs.map(d=>d.data()); ev.sort((a,b)=>(b.createdAt||0)-(a.createdAt||0)); return ev; }
+  catch(e){ console.error(e); return []; }
 }
-async function getRecord(key){ try{ const snap = await fs.getDoc(fs.doc(db,"records",key)); return snap.exists()?snap.data():null; }catch(e){ console.error(e); return null; } }
-async function saveRecord(key, data){ try{ await fs.setDoc(fs.doc(db,"records",key), data); return true; }catch(e){ console.error(e); return false; } }
-async function loadRecords(eventId){
+
+// ---------- Firestore: shifts (staff / freelance fixe) ----------
+async function startShift(role,pj,nom,prenom,heureDebut,eventId){
+  const date = todayStr();
+  const nomSlug=slugify(nom), prenomSlug=slugify(prenom);
+  const qOpen = fs.query(fs.collection(db,"shifts"), fs.where("pj","==",pj), fs.where("nomSlug","==",nomSlug), fs.where("prenomSlug","==",prenomSlug), fs.where("date","==",date), fs.where("heureFinJour","==",null));
+  const openSnap = await fs.getDocs(qOpen);
+  if(!openSnap.empty) return {ok:false, msg:"Un shift est déjà en cours pour ce PJ aujourd'hui — terminez-le avant d'en commencer un nouveau."};
+
+  let restWarning = false;
   try{
-    const q = fs.query(fs.collection(db,"records"), fs.where("eventId","==",eventId));
+    const qAll = fs.query(fs.collection(db,"shifts"), fs.where("nomSlug","==",nomSlug), fs.where("prenomSlug","==",prenomSlug));
+    const snap = await fs.getDocs(qAll);
+    const closed = snap.docs.map(d=>d.data()).filter(s=>s.heureFinJour).sort((a,b)=> (b.date+b.heureFinJour).localeCompare(a.date+a.heureFinJour));
+    if(closed.length){
+      const gap = hoursDiffAcrossDates(closed[0].date, closed[0].heureFinJour, date, heureDebut);
+      if(gap < 12) restWarning = true;
+    }
+  }catch(e){ console.error(e); }
+
+  const row = { role, pj, eventId, nom, prenom, nomSlug, prenomSlug, date, heureDebut, heureFinJour:null, commentaire:"", restWarning, createdTs: Date.now() };
+  try{
+    await fs.addDoc(fs.collection(db,"shifts"), row);
+    pushToSheet("Shifts", {...row, statut:"début"});
+    return {ok:true};
+  }catch(e){ console.error(e); return {ok:false, msg:"Erreur d'enregistrement, réessayez."}; }
+}
+
+async function endShift(pj,nom,prenom,heureFin,commentaire){
+  const date = todayStr();
+  const nomSlug=slugify(nom), prenomSlug=slugify(prenom);
+  try{
+    const qOpen = fs.query(fs.collection(db,"shifts"), fs.where("pj","==",pj), fs.where("nomSlug","==",nomSlug), fs.where("prenomSlug","==",prenomSlug), fs.where("date","==",date), fs.where("heureFinJour","==",null));
+    const snap = await fs.getDocs(qOpen);
+    if(snap.empty) return {ok:false, msg:"Aucun shift en cours trouvé aujourd'hui pour ce PJ — commencez d'abord un shift."};
+    const docSnap = snap.docs[0];
+    await fs.updateDoc(fs.doc(db,"shifts",docSnap.id), { heureFinJour: heureFin, commentaire: commentaire||"" });
+
+    const qToday = fs.query(fs.collection(db,"shifts"), fs.where("pj","==",pj), fs.where("nomSlug","==",nomSlug), fs.where("prenomSlug","==",prenomSlug), fs.where("date","==",date));
+    const snapToday = await fs.getDocs(qToday);
+    let totalWorked = 0;
+    snapToday.docs.forEach(d=>{ const s=d.data(); if(s.heureFinJour) totalWorked += hoursBetween(s.heureDebut, s.heureFinJour); });
+    const normal = normalHoursForDate(date);
+    const recupToday = Math.max(0, totalWorked - normal);
+    const sundayBonus = isSundayISO(date) && totalWorked >= 8;
+
+    const project = await computeProjectRecup(pj,nom,prenom);
+    pushToSheet("Shifts", { pj, nom, prenom, date, heureFin, commentaire, statut:"fin", totalWorked, recupToday, sundayBonus });
+    return {ok:true, totalWorked, normal, recupToday, sundayBonus, project};
+  }catch(e){ console.error(e); return {ok:false, msg:"Erreur d'enregistrement, réessayez."}; }
+}
+
+async function computeProjectRecup(pj,nom,prenom){
+  const nomSlug=slugify(nom), prenomSlug=slugify(prenom);
+  try{
+    const q = fs.query(fs.collection(db,"shifts"), fs.where("pj","==",pj), fs.where("nomSlug","==",nomSlug), fs.where("prenomSlug","==",prenomSlug));
     const snap = await fs.getDocs(q);
-    const recs = snap.docs.map(d=>d.data());
-    recs.sort((a,b)=>(a.arriveeTs||0)-(b.arriveeTs||0));
-    return recs;
-  }catch(e){ console.error(e); return []; }
+    const byDate = {};
+    snap.docs.forEach(d=>{ const s=d.data(); if(!s.heureFinJour) return; if(!byDate[s.date]) byDate[s.date]=0; byDate[s.date]+=hoursBetween(s.heureDebut,s.heureFinJour); });
+    let totalRecup=0, bonusDays=0;
+    Object.keys(byDate).forEach(date=>{
+      const worked = byDate[date], normal = normalHoursForDate(date);
+      totalRecup += Math.max(0, worked-normal);
+      if(isSundayISO(date) && worked>=8) bonusDays++;
+    });
+    return { totalRecupHeures: totalRecup, joursBonus: bonusDays };
+  }catch(e){ console.error(e); return { totalRecupHeures:0, joursBonus:0 }; }
 }
+
+async function loadAllShifts(){
+  try{ const snap = await fs.getDocs(fs.collection(db,"shifts")); return snap.docs.map(d=>({id:d.id,...d.data()})); }
+  catch(e){ console.error(e); return []; }
+}
+async function updateShiftDoc(id, fields){ try{ await fs.updateDoc(fs.doc(db,"shifts",id), fields); return true; }catch(e){ console.error(e); return false; } }
+
+// ---------- Firestore: freelances externes ----------
+async function getExterne(key){ try{ const s=await fs.getDoc(fs.doc(db,"freelance_externe",key)); return s.exists()?s.data():null; }catch(e){ console.error(e); return null; } }
+async function saveExterne(key,data){ try{ await fs.setDoc(fs.doc(db,"freelance_externe",key),data); return true; }catch(e){ console.error(e); return false; } }
+async function loadExternes(eventId){
+  try{ const q=fs.query(fs.collection(db,"freelance_externe"), fs.where("eventId","==",eventId)); const snap=await fs.getDocs(q); return snap.docs.map(d=>d.data()); }
+  catch(e){ console.error(e); return []; }
+}
+
+// ---------- Firestore: autres ----------
+async function getAutre(key){ try{ const s=await fs.getDoc(fs.doc(db,"autres",key)); return s.exists()?s.data():null; }catch(e){ console.error(e); return null; } }
+async function saveAutre(key,data){ try{ await fs.setDoc(fs.doc(db,"autres",key),data); return true; }catch(e){ console.error(e); return false; } }
+async function loadAutres(eventId){
+  try{ const q=fs.query(fs.collection(db,"autres"), fs.where("eventId","==",eventId)); const snap=await fs.getDocs(q); return snap.docs.map(d=>d.data()); }
+  catch(e){ console.error(e); return []; }
+}
+
+// ---------- Firestore: grille tarifaire ----------
+const DEFAULT_LEADERS = ["Lorenzo","Jason","Sylvain"];
+async function getRates(){
+  try{
+    const s = await fs.getDoc(fs.doc(db,"config","rates"));
+    if(s.exists()) return s.data();
+  }catch(e){ console.error(e); }
+  const rates = {};
+  DEFAULT_LEADERS.forEach(l=>rates[l]={Tech:null,Deco:null});
+  rates["Lorenzo"].Tech = 2500;
+  return { leaders: DEFAULT_LEADERS, rates };
+}
+async function saveRates(data){ try{ await fs.setDoc(fs.doc(db,"config","rates"), data); return true; }catch(e){ console.error(e); return false; } }
 
 // ---------- Router ----------
 window.addEventListener("hashchange", render);
 window.addEventListener("DOMContentLoaded", render);
-
 function render(){
-  if(!isConfigured){ renderSetupNeeded(); return; }
   const hash = window.location.hash;
   const m = hash.match(/^#e=(.+)$/);
   if(m) renderSign(decodeURIComponent(m[1]));
   else renderAdmin();
 }
 
-function renderSetupNeeded(){
-  document.getElementById("app").innerHTML = `
-    <header class="top"><div class="brand">Registre<span>·</span></div></header>
-    <div class="card">
-      <h2>Configuration requise</h2>
-      <p class="muted">Cette app a besoin d'être reliée à votre base Firebase (gratuite) avant de fonctionner. Ouvrez le fichier .html, repérez le bloc <code>firebaseConfig</code> tout en haut du script, et remplacez les valeurs par celles de votre projet Firebase.</p>
-      <p class="muted">Retournez ensuite dans votre conversation avec Claude si vous avez besoin d'aide pour cette étape.</p>
-    </div>`;
-}
-
-// ---------- Signing view (freelance) ----------
+// ============================================================
+// SIGN SIDE (freelances / staff)
+// ============================================================
 async function renderSign(eventId){
   const app = document.getElementById("app");
   app.innerHTML = `<div class="center muted" style="padding-top:60px;">Chargement…</div>`;
@@ -181,61 +294,306 @@ async function renderSign(eventId){
     app.innerHTML = `<div class="card center"><div class="tag">Registre de présence</div><h2>Événement introuvable</h2><p class="muted">Ce lien n'est plus valide. Merci de contacter l'organisateur.</p></div>`;
     return;
   }
-  app.innerHTML = `
+  if(!selectedRole){ renderRoleSelect(ev); return; }
+  if(selectedRole==="staff") renderShiftFlow(ev, "staff", "Staff interne Stage'In");
+  else if(selectedRole==="freelance_fixe") renderShiftFlow(ev, "freelance_fixe", "Freelance fixe");
+  else if(selectedRole==="externe") renderExterneFlow(ev);
+  else renderAutreFlow(ev);
+}
+
+function renderRoleSelect(ev){
+  document.getElementById("app").innerHTML = `
     <header class="top"><div class="brand">Registre<span>·</span></div><div class="tag">${esc(ev.name)} — ${fmtDateFR(ev.date)}</div></header>
+    <div class="card">
+      <h2>Vous êtes…</h2>
+      <button class="btn-role btn-accent" data-role="staff">Staff interne Stage'In</button>
+      <button class="btn-role btn-accent" data-role="freelance_fixe">Freelance fixe</button>
+      <button class="btn-role btn-accent" data-role="externe">Freelance service externe (Lorenzo / Jason / Sylvain / etc.)</button>
+      <button class="btn-role btn-ghost" data-role="autre">Autre</button>
+    </div>`;
+  document.querySelectorAll("[data-role]").forEach(btn=>{
+    btn.onclick = ()=>{ selectedRole = btn.dataset.role; renderSign(ev.id); };
+  });
+}
+
+function roleHeader(ev, label){
+  return `
+    <header class="top"><div class="brand">Registre<span>·</span></div><div class="tag">${esc(ev.name)} — ${fmtDateFR(ev.date)}</div></header>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+      <div class="tag">${esc(label)}</div>
+      <a class="backlink" id="changeRole">Changer de profil</a>
+    </div>`;
+}
+function wireChangeRole(ev){
+  const el = document.getElementById("changeRole");
+  if(el) el.onclick = ()=>{ selectedRole=null; renderSign(ev.id); };
+}
+
+// ---- Staff interne / Freelance fixe : shifts avec récup ----
+function renderShiftFlow(ev, roleKey, roleLabel){
+  const app = document.getElementById("app");
+  app.innerHTML = roleHeader(ev, roleLabel) + `
+    <div class="tabs">
+      <button id="tabStart" class="btn-accent">Je commence un shift</button>
+      <button id="tabEnd" class="btn-ghost">Je termine mon shift</button>
+    </div>
+    <div id="shiftBody"></div>`;
+  wireChangeRole(ev);
+  document.getElementById("tabStart").onclick = ()=>{ document.getElementById("tabStart").className="btn-accent"; document.getElementById("tabEnd").className="btn-ghost"; renderShiftStart(ev, roleKey); };
+  document.getElementById("tabEnd").onclick = ()=>{ document.getElementById("tabEnd").className="btn-accent"; document.getElementById("tabStart").className="btn-ghost"; renderShiftEnd(ev, roleKey); };
+  renderShiftStart(ev, roleKey);
+}
+
+function renderShiftStart(ev, roleKey){
+  const body = document.getElementById("shiftBody");
+  body.innerHTML = `
+    <div class="card">
+      <h2>Commencer un shift</h2>
+      <div class="field"><label>Identifiant projet (PJ + 5 chiffres)</label><input type="text" id="fPJ" placeholder="PJ12345" maxlength="7"></div>
+      <div class="row">
+        <div class="field"><label>Nom</label><input type="text" id="fNom"></div>
+        <div class="field"><label>Prénom</label><input type="text" id="fPrenom"></div>
+      </div>
+      <div class="field"><label>Heure d'arrivée</label><select id="fHeureDebut">${buildTimeOptions(nowRounded())}</select></div>
+      <button class="btn-stamp" id="submitStart" style="width:100%;margin-top:6px;">Commencer mon shift</button>
+    </div>`;
+  document.getElementById("fPJ").addEventListener("input", e=>{ e.target.value = e.target.value.toUpperCase(); });
+  document.getElementById("submitStart").onclick = async ()=>{
+    const pj = document.getElementById("fPJ").value.trim().toUpperCase();
+    const nom = document.getElementById("fNom").value.trim();
+    const prenom = document.getElementById("fPrenom").value.trim();
+    const heureDebut = document.getElementById("fHeureDebut").value;
+    if(!/^PJ\d{5}$/.test(pj)){ showToast("Format PJ invalide — ex. PJ12345"); return; }
+    if(!nom || !prenom){ showToast("Merci de renseigner nom et prénom"); return; }
+    const res = await startShift(roleKey, pj, nom, prenom, heureDebut, ev.id);
+    if(res.ok){
+      body.innerHTML = `<div class="card center"><div class="stamp-mark">Shift commencé</div><p class="muted" style="margin-top:16px;">${esc(prenom)} ${esc(nom)} — ${pj} — ${heureDebut}</p></div>`;
+    } else showToast(res.msg || "Erreur");
+  };
+}
+
+function renderShiftEnd(ev, roleKey){
+  const body = document.getElementById("shiftBody");
+  body.innerHTML = `
+    <div class="card">
+      <h2>Terminer mon shift</h2>
+      <div class="field"><label>Identifiant projet (PJ + 5 chiffres)</label><input type="text" id="fPJ2" placeholder="PJ12345" maxlength="7"></div>
+      <div class="row">
+        <div class="field"><label>Nom</label><input type="text" id="fNom2"></div>
+        <div class="field"><label>Prénom</label><input type="text" id="fPrenom2"></div>
+      </div>
+      <div class="field"><label>Heure de fin</label><select id="fHeureFin">${buildTimeOptions(nowRounded())}</select></div>
+      <div class="field"><label>Commentaire (optionnel)</label><textarea id="fComment" placeholder="Remarques sur la journée à faire remonter à l'admin…"></textarea></div>
+      <button class="btn-stamp" id="submitEnd" style="width:100%;margin-top:6px;">Terminer mon shift</button>
+    </div>`;
+  document.getElementById("fPJ2").addEventListener("input", e=>{ e.target.value = e.target.value.toUpperCase(); });
+  document.getElementById("submitEnd").onclick = async ()=>{
+    const pj = document.getElementById("fPJ2").value.trim().toUpperCase();
+    const nom = document.getElementById("fNom2").value.trim();
+    const prenom = document.getElementById("fPrenom2").value.trim();
+    const heureFin = document.getElementById("fHeureFin").value;
+    const commentaire = document.getElementById("fComment").value.trim();
+    if(!/^PJ\d{5}$/.test(pj)){ showToast("Format PJ invalide — ex. PJ12345"); return; }
+    if(!nom || !prenom){ showToast("Merci de renseigner nom et prénom"); return; }
+    const res = await endShift(pj, nom, prenom, heureFin, commentaire);
+    if(res.ok){
+      body.innerHTML = `
+        <div class="card center">
+          <div class="stamp-mark">Shift terminé</div>
+          <p class="muted" style="margin-top:16px;">${esc(prenom)} ${esc(nom)} — ${pj} — fin à ${heureFin}</p>
+          <div class="recup-box" style="text-align:left;">
+            <strong>Aujourd'hui</strong><br>
+            Heures travaillées : ${res.totalWorked.toFixed(2)}h (normal : ${res.normal}h)<br>
+            Récupération accumulée aujourd'hui : ${res.recupToday.toFixed(2)}h
+            ${res.sundayBonus ? "<br>+ 1 jour de récupération bonus (dimanche complet travaillé)" : ""}
+            <br><br><strong>Cumulé sur ${esc(pj)}</strong><br>
+            Récupération totale : ${res.project.totalRecupHeures.toFixed(2)}h${res.project.joursBonus ? " + "+res.project.joursBonus+" jour(s) bonus" : ""}
+          </div>
+        </div>`;
+    } else showToast(res.msg || "Erreur");
+  };
+}
+function nowRounded(){
+  const d = new Date();
+  const m = Math.round(d.getMinutes()/15)*15;
+  const h = (m===60) ? (d.getHours()+1)%24 : d.getHours();
+  return String(h).padStart(2,"0")+":"+String(m===60?0:m).padStart(2,"0");
+}
+
+// ---- Freelance service externe ----
+function renderExterneFlow(ev){
+  const app = document.getElementById("app");
+  app.innerHTML = roleHeader(ev, "Freelance service externe") + `
     <div class="tabs">
       <button id="tabIn" class="btn-accent">J'arrive</button>
       <button id="tabOut" class="btn-ghost">Je pars</button>
     </div>
     <div id="signBody"></div>`;
-  document.getElementById("tabIn").onclick=()=>{ document.getElementById("tabIn").className="btn-accent"; document.getElementById("tabOut").className="btn-ghost"; renderArrivalForm(ev); };
-  document.getElementById("tabOut").onclick=()=>{ document.getElementById("tabOut").className="btn-accent"; document.getElementById("tabIn").className="btn-ghost"; renderDepartForm(ev); };
-  renderArrivalForm(ev);
+  wireChangeRole(ev);
+  document.getElementById("tabIn").onclick = ()=>{ document.getElementById("tabIn").className="btn-accent"; document.getElementById("tabOut").className="btn-ghost"; renderExterneArrival(ev); };
+  document.getElementById("tabOut").onclick = ()=>{ document.getElementById("tabOut").className="btn-accent"; document.getElementById("tabIn").className="btn-ghost"; renderExterneDepart(ev); };
+  renderExterneArrival(ev);
 }
 
-function renderArrivalForm(ev){
+function renderExterneArrival(ev){
   const body = document.getElementById("signBody");
   body.innerHTML = `
     <div class="card">
       <h2>Enregistrer mon arrivée</h2>
       <div class="row">
-        <div class="field"><label>Nom</label><input type="text" id="fNom" autocomplete="family-name"></div>
-        <div class="field"><label>Prénom</label><input type="text" id="fPrenom" autocomplete="given-name"></div>
+        <div class="field"><label>Nom</label><input type="text" id="fNom"></div>
+        <div class="field"><label>Prénom</label><input type="text" id="fPrenom"></div>
+      </div>
+      <div class="row">
+        <div class="field"><label>Catégorie</label><select id="fCat"><option value="Tech">Freelance Tech</option><option value="Deco">Freelance Déco</option></select></div>
+        <div class="field"><label>Chef d'équipe</label><select id="fLeader"><option value="Lorenzo">Lorenzo</option><option value="Jason">Jason</option><option value="Sylvain">Sylvain</option><option value="Autre">Autre</option></select></div>
+      </div>
+      <div class="field" id="customLeaderWrap" style="display:none;"><label>Précisez le chef d'équipe</label><input type="text" id="fLeaderCustom"></div>
+      <div class="field">
+        <label>Signature</label>
+        <canvas id="sigPad" class="sigpad"></canvas>
+        <div class="sig-actions"><span class="muted" style="font-size:12px;">Signez avec le doigt</span><button class="btn-ghost btn-sm" id="clearSig">Effacer</button></div>
+      </div>
+      <button class="btn-stamp" id="submitIn" style="width:100%;margin-top:6px;">Signer et enregistrer l'arrivée</button>
+    </div>`;
+  document.getElementById("fLeader").onchange = e=>{ document.getElementById("customLeaderWrap").style.display = e.target.value==="Autre" ? "block":"none"; };
+  initSigPad(document.getElementById("sigPad"));
+  document.getElementById("clearSig").onclick = clearSigPad;
+  document.getElementById("submitIn").onclick = ()=> submitExterneArrival(ev);
+}
+
+async function submitExterneArrival(ev){
+  const nom = document.getElementById("fNom").value.trim();
+  const prenom = document.getElementById("fPrenom").value.trim();
+  const categorie = document.getElementById("fCat").value;
+  let leader = document.getElementById("fLeader").value;
+  if(leader==="Autre"){ leader = document.getElementById("fLeaderCustom").value.trim() || "Autre"; }
+  if(!nom || !prenom){ showToast("Merci de renseigner nom et prénom"); return; }
+  if(!sigHasContent){ showToast("Merci de signer avant de valider"); return; }
+  const date = todayStr();
+  const slug = slugify(nom)+"-"+slugify(prenom);
+  const key = ev.id+"_"+date+"_"+slug;
+  const existing = await getExterne(key);
+  if(existing && existing.heureArrivee){ showToast(`Déjà enregistré aujourd'hui à ${existing.heureArrivee}`); return; }
+  const signature = document.getElementById("sigPad").toDataURL("image/png");
+  const record = { id:key, eventId:ev.id, eventName:ev.name, nom, prenom, categorie, leader, date, signature, heureArrivee: nowTimeStr(), arriveeTs: Date.now(), heureDepart:null, departTs:null };
+  const ok = await saveExterne(key, record);
+  if(ok){
+    pushToSheet("FreelancesExternes", {...record, signature:undefined});
+    document.getElementById("signBody").innerHTML = `<div class="card center"><div class="stamp-mark">Arrivée enregistrée</div><p class="muted" style="margin-top:16px;">${esc(prenom)} ${esc(nom)} — ${record.heureArrivee}</p></div>`;
+  } else showToast("Erreur d'enregistrement, réessayez");
+}
+
+function renderExterneDepart(ev){
+  const body = document.getElementById("signBody");
+  body.innerHTML = `
+    <div class="card">
+      <h2>Enregistrer mon départ</h2>
+      <div class="row">
+        <div class="field"><label>Nom</label><input type="text" id="fNomOut"></div>
+        <div class="field"><label>Prénom</label><input type="text" id="fPrenomOut"></div>
+      </div>
+      <button class="btn-stamp" id="submitOut" style="width:100%;margin-top:6px;">Enregistrer mon départ</button>
+    </div>`;
+  document.getElementById("submitOut").onclick = async ()=>{
+    const nom = document.getElementById("fNomOut").value.trim();
+    const prenom = document.getElementById("fPrenomOut").value.trim();
+    if(!nom || !prenom){ showToast("Merci de renseigner nom et prénom"); return; }
+    const date = todayStr(); const slug = slugify(nom)+"-"+slugify(prenom); const key = ev.id+"_"+date+"_"+slug;
+    const existing = await getExterne(key);
+    if(!existing){ showToast("Aucune arrivée trouvée aujourd'hui à ce nom"); return; }
+    if(existing.heureDepart){ showToast(`Départ déjà enregistré à ${existing.heureDepart}`); return; }
+    existing.heureDepart = nowTimeStr(); existing.departTs = Date.now();
+    const ok = await saveExterne(key, existing);
+    if(ok){
+      pushToSheet("FreelancesExternes", {...existing, signature:undefined, statut:"départ"});
+      body.innerHTML = `<div class="card center"><div class="stamp-mark">Départ enregistré</div><p class="muted" style="margin-top:16px;">${esc(prenom)} ${esc(nom)} — ${existing.heureDepart}</p></div>`;
+    } else showToast("Erreur d'enregistrement, réessayez");
+  };
+}
+
+// ---- Autre ----
+function renderAutreFlow(ev){
+  const app = document.getElementById("app");
+  app.innerHTML = roleHeader(ev, "Autre") + `
+    <div class="tabs">
+      <button id="tabIn" class="btn-accent">J'arrive</button>
+      <button id="tabOut" class="btn-ghost">Je pars</button>
+    </div>
+    <div id="signBody"></div>`;
+  wireChangeRole(ev);
+  document.getElementById("tabIn").onclick = ()=>{ document.getElementById("tabIn").className="btn-accent"; document.getElementById("tabOut").className="btn-ghost"; renderAutreArrival(ev); };
+  document.getElementById("tabOut").onclick = ()=>{ document.getElementById("tabOut").className="btn-accent"; document.getElementById("tabIn").className="btn-ghost"; renderAutreDepart(ev); };
+  renderAutreArrival(ev);
+}
+function renderAutreArrival(ev){
+  const body = document.getElementById("signBody");
+  body.innerHTML = `
+    <div class="card">
+      <h2>Enregistrer mon arrivée</h2>
+      <div class="row">
+        <div class="field"><label>Nom</label><input type="text" id="fNom"></div>
+        <div class="field"><label>Prénom</label><input type="text" id="fPrenom"></div>
       </div>
       <div class="field">
         <label>Signature</label>
         <canvas id="sigPad" class="sigpad"></canvas>
         <div class="sig-actions"><span class="muted" style="font-size:12px;">Signez avec le doigt</span><button class="btn-ghost btn-sm" id="clearSig">Effacer</button></div>
       </div>
-      <p class="muted" style="font-size:12px;">L'heure d'arrivée sera enregistrée automatiquement et ne pourra pas être modifiée par vous-même.</p>
       <button class="btn-stamp" id="submitIn" style="width:100%;margin-top:6px;">Signer et enregistrer l'arrivée</button>
     </div>`;
   initSigPad(document.getElementById("sigPad"));
   document.getElementById("clearSig").onclick = clearSigPad;
-  document.getElementById("submitIn").onclick = ()=> submitArrival(ev);
+  document.getElementById("submitIn").onclick = async ()=>{
+    const nom = document.getElementById("fNom").value.trim();
+    const prenom = document.getElementById("fPrenom").value.trim();
+    if(!nom || !prenom){ showToast("Merci de renseigner nom et prénom"); return; }
+    if(!sigHasContent){ showToast("Merci de signer avant de valider"); return; }
+    const date = todayStr(); const slug = slugify(nom)+"-"+slugify(prenom); const key = ev.id+"_"+date+"_"+slug;
+    const existing = await getAutre(key);
+    if(existing && existing.heureArrivee){ showToast(`Déjà enregistré aujourd'hui à ${existing.heureArrivee}`); return; }
+    const signature = document.getElementById("sigPad").toDataURL("image/png");
+    const record = { id:key, eventId:ev.id, eventName:ev.name, nom, prenom, date, signature, heureArrivee: nowTimeStr(), arriveeTs: Date.now(), heureDepart:null, departTs:null };
+    const ok = await saveAutre(key, record);
+    if(ok){
+      pushToSheet("Autres", {...record, signature:undefined});
+      body.innerHTML = `<div class="card center"><div class="stamp-mark">Arrivée enregistrée</div><p class="muted" style="margin-top:16px;">${esc(prenom)} ${esc(nom)} — ${record.heureArrivee}</p></div>`;
+    } else showToast("Erreur d'enregistrement, réessayez");
+  };
 }
-
-function renderDepartForm(ev){
+function renderAutreDepart(ev){
   const body = document.getElementById("signBody");
   body.innerHTML = `
     <div class="card">
       <h2>Enregistrer mon départ</h2>
       <div class="row">
-        <div class="field"><label>Nom</label><input type="text" id="fNomOut" autocomplete="family-name"></div>
-        <div class="field"><label>Prénom</label><input type="text" id="fPrenomOut" autocomplete="given-name"></div>
+        <div class="field"><label>Nom</label><input type="text" id="fNomOut"></div>
+        <div class="field"><label>Prénom</label><input type="text" id="fPrenomOut"></div>
       </div>
-      <p class="muted" style="font-size:12px;">Nous retrouvons votre enregistrement d'arrivée du jour et ajoutons l'heure actuelle comme heure de départ.</p>
       <button class="btn-stamp" id="submitOut" style="width:100%;margin-top:6px;">Enregistrer mon départ</button>
     </div>`;
-  document.getElementById("submitOut").onclick = ()=> submitDepart(ev);
+  document.getElementById("submitOut").onclick = async ()=>{
+    const nom = document.getElementById("fNomOut").value.trim();
+    const prenom = document.getElementById("fPrenomOut").value.trim();
+    if(!nom || !prenom){ showToast("Merci de renseigner nom et prénom"); return; }
+    const date = todayStr(); const slug = slugify(nom)+"-"+slugify(prenom); const key = ev.id+"_"+date+"_"+slug;
+    const existing = await getAutre(key);
+    if(!existing){ showToast("Aucune arrivée trouvée aujourd'hui à ce nom"); return; }
+    if(existing.heureDepart){ showToast(`Départ déjà enregistré à ${existing.heureDepart}`); return; }
+    existing.heureDepart = nowTimeStr(); existing.departTs = Date.now();
+    const ok = await saveAutre(key, existing);
+    if(ok){
+      pushToSheet("Autres", {...existing, signature:undefined, statut:"départ"});
+      body.innerHTML = `<div class="card center"><div class="stamp-mark">Départ enregistré</div><p class="muted" style="margin-top:16px;">${esc(prenom)} ${esc(nom)} — ${existing.heureDepart}</p></div>`;
+    } else showToast("Erreur d'enregistrement, réessayez");
+  };
 }
 
+// ---- Signature pad (partagé) ----
 function initSigPad(canvas){
   const ratio = window.devicePixelRatio || 1;
-  canvas.width = (canvas.clientWidth||300)*ratio;
-  canvas.height = 150*ratio;
-  const ctx = canvas.getContext("2d");
-  ctx.scale(ratio, ratio);
+  canvas.width = (canvas.clientWidth||300)*ratio; canvas.height = 150*ratio;
+  const ctx = canvas.getContext("2d"); ctx.scale(ratio, ratio);
   ctx.lineWidth = 2.2; ctx.lineCap = "round"; ctx.strokeStyle = "#16221D";
   sigPadCtx = ctx; sigHasContent = false; sigDrawing = false;
   function pos(e){ const r=canvas.getBoundingClientRect(); const p=e.touches?e.touches[0]:e; return {x:p.clientX-r.left,y:p.clientY-r.top}; }
@@ -245,51 +603,16 @@ function initSigPad(canvas){
   canvas.addEventListener("mousedown",start); canvas.addEventListener("mousemove",move); window.addEventListener("mouseup",end);
   canvas.addEventListener("touchstart",start,{passive:false}); canvas.addEventListener("touchmove",move,{passive:false}); canvas.addEventListener("touchend",end);
 }
-function clearSigPad(){
-  const canvas = document.getElementById("sigPad");
-  if(!canvas || !sigPadCtx) return;
-  sigPadCtx.clearRect(0,0,canvas.width,canvas.height);
-  sigHasContent = false;
+function clearSigPad(){ const c=document.getElementById("sigPad"); if(!c||!sigPadCtx) return; sigPadCtx.clearRect(0,0,c.width,c.height); sigHasContent=false; }
+function openSigModal(src){
+  const bg=document.createElement("div"); bg.className="modal-bg";
+  bg.innerHTML = `<div class="modal"><img src="${src}" style="width:100%;background:#fff;border-radius:6px;"></div>`;
+  bg.onclick = ()=> bg.remove(); document.body.appendChild(bg);
 }
 
-async function submitArrival(ev){
-  const nom = document.getElementById("fNom").value.trim();
-  const prenom = document.getElementById("fPrenom").value.trim();
-  if(!nom || !prenom){ showToast("Merci de renseigner nom et prénom"); return; }
-  if(!sigHasContent){ showToast("Merci de signer avant de valider"); return; }
-  const date = todayStr();
-  const slug = slugify(nom)+"-"+slugify(prenom);
-  const key = ev.id+"_"+date+"_"+slug;
-  const existing = await getRecord(key);
-  if(existing && existing.heureArrivee){ showToast(`Déjà enregistré aujourd'hui à ${existing.heureArrivee}`); return; }
-  const canvas = document.getElementById("sigPad");
-  const signature = canvas.toDataURL("image/png");
-  const record = { id:key, eventId:ev.id, eventName:ev.name, nom, prenom, date, signature, heureArrivee: nowTimeStr(), arriveeTs: Date.now(), heureDepart: null, departTs: null };
-  const ok = await saveRecord(key, record);
-  if(ok){
-    document.getElementById("signBody").innerHTML = `<div class="card center"><div class="stamp-mark">Arrivée enregistrée</div><p class="muted" style="margin-top:16px;">${esc(prenom)} ${esc(nom)} — ${record.heureArrivee}</p></div>`;
-  } else showToast("Erreur d'enregistrement, réessayez");
-}
-
-async function submitDepart(ev){
-  const nom = document.getElementById("fNomOut").value.trim();
-  const prenom = document.getElementById("fPrenomOut").value.trim();
-  if(!nom || !prenom){ showToast("Merci de renseigner nom et prénom"); return; }
-  const date = todayStr();
-  const slug = slugify(nom)+"-"+slugify(prenom);
-  const key = ev.id+"_"+date+"_"+slug;
-  const existing = await getRecord(key);
-  if(!existing){ showToast("Aucune arrivée trouvée aujourd'hui à ce nom — signez d'abord votre arrivée"); return; }
-  if(existing.heureDepart){ showToast(`Départ déjà enregistré à ${existing.heureDepart}`); return; }
-  existing.heureDepart = nowTimeStr();
-  existing.departTs = Date.now();
-  const ok = await saveRecord(key, existing);
-  if(ok){
-    document.getElementById("signBody").innerHTML = `<div class="card center"><div class="stamp-mark">Départ enregistré</div><p class="muted" style="margin-top:16px;">${esc(prenom)} ${esc(nom)} — ${existing.heureDepart}</p></div>`;
-  } else showToast("Erreur d'enregistrement, réessayez");
-}
-
-// ---------- Admin view ----------
+// ============================================================
+// ADMIN SIDE
+// ============================================================
 async function renderAdmin(){
   const app = document.getElementById("app");
   if(!adminAuthed){
@@ -318,18 +641,42 @@ async function renderAdmin(){
     </div>
     <div class="card">
       <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
-        <h2 style="margin:0;">Événements</h2>
-        <div style="display:flex;gap:8px;">
-          <button class="btn-ghost btn-sm" id="toggleListBtn">Masquer ▾</button>
-          <button class="btn-ghost btn-sm" id="toggleTrashBtn">Corbeille</button>
-        </div>
+        <h2 style="margin:0;">Événements actifs</h2>
+        <button class="btn-ghost btn-sm" id="toggleListBtn">Masquer ▾</button>
       </div>
+      <p class="muted" style="margin-top:4px;">Ces événements sont visibles ici tant qu'ils n'ont pas été mis à la corbeille.</p>
       <div id="eventsList" class="muted" style="margin-top:14px;">Chargement…</div>
+    </div>
+    <div class="card">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+        <h2 style="margin:0;">Corbeille</h2>
+        <button class="btn-ghost btn-sm" id="toggleTrashBtn">Afficher ▾</button>
+      </div>
+      <p class="muted" style="margin-top:4px;">Les événements mis à la corbeille disparaissent de la liste active et des QR codes, mais leurs présences déjà enregistrées restent conservées.</p>
       <div id="trashList" style="margin-top:14px;display:none;"></div>
     </div>
-    <div id="recordsSection"></div>`;
+    <div id="recordsSection"></div>
+    <div class="card">
+      <h2>Heures — Staff interne &amp; Freelance fixe</h2>
+      <div class="row">
+        <div class="field"><label>PJ</label><input type="text" id="filtPJ" placeholder="PJ12345"></div>
+        <div class="field"><label>Nom</label><input type="text" id="filtNom"></div>
+        <div class="field"><label>Prénom</label><input type="text" id="filtPrenom"></div>
+        <div class="field"><label>Date</label><input type="text" id="filtDate" placeholder="JJ/MM/AAAA"></div>
+      </div>
+      <button class="btn-accent btn-sm" id="filtBtn">Charger / filtrer</button>
+      <div id="shiftsTableWrap" style="margin-top:16px;"></div>
+    </div>
+    <div class="card">
+      <h2>Grille tarifaire — Freelances externes (Rs)</h2>
+      <p class="muted">Tarif par personne selon Catégorie × Chef d'équipe. Laisser vide si non défini.</p>
+      <div id="ratesWrap">Chargement…</div>
+    </div>`;
+
   document.getElementById("createEv").onclick = createEvent;
   autoSlashDate(document.getElementById("evDate"));
+  autoSlashDate(document.getElementById("filtDate"));
+  document.getElementById("filtPJ").addEventListener("input", e=>{ e.target.value = e.target.value.toUpperCase(); });
 
   const listEl = document.getElementById("eventsList");
   const toggleListBtn = document.getElementById("toggleListBtn");
@@ -343,11 +690,14 @@ async function renderAdmin(){
   toggleTrashBtn.onclick = async ()=>{
     const hidden = trashEl.style.display === "none";
     trashEl.style.display = hidden ? "block" : "none";
-    toggleTrashBtn.textContent = hidden ? "Fermer la corbeille" : "Corbeille";
+    toggleTrashBtn.textContent = hidden ? "Masquer ▾" : "Afficher ▾";
     if(hidden) await refreshTrashList();
   };
+  document.getElementById("filtBtn").onclick = refreshShiftsTable;
 
   await refreshEventsList();
+  await refreshShiftsTable();
+  await refreshRatesPanel();
 }
 
 async function createEvent(){
@@ -405,10 +755,7 @@ async function refreshTrashList(){
   trashEl.innerHTML = `<p class="muted" style="margin-bottom:10px;">Événements archivés — les présences déjà enregistrées restent conservées.</p>` +
     archived.map(ev => `
     <div class="event-item">
-      <div class="event-info">
-        <div class="event-name">${esc(ev.name)}</div>
-        <div class="event-date">${fmtDateFR(ev.date)}</div>
-      </div>
+      <div class="event-info"><div class="event-name">${esc(ev.name)}</div><div class="event-date">${fmtDateFR(ev.date)}</div></div>
       <div style="display:flex;gap:8px;">
         <button class="btn-accent btn-sm" data-restore="${ev.id}">Restaurer</button>
         <button class="btn-ghost btn-sm" data-delete-ev="${ev.id}" style="color:var(--stamp);border-color:var(--stamp);">Supprimer définitivement</button>
@@ -426,7 +773,7 @@ async function refreshTrashList(){
   });
   trashEl.querySelectorAll("[data-delete-ev]").forEach(btn=>{
     btn.onclick = async ()=>{
-      if(!confirm("Supprimer définitivement cet événement ? Cette action est irréversible (les présences déjà enregistrées ne seront pas supprimées).")) return;
+      if(!confirm("Supprimer définitivement cet événement ? Les présences déjà enregistrées ne seront pas supprimées.")) return;
       const ok = await deleteEventDoc(btn.dataset.deleteEv);
       if(ok){ showToast("Événement supprimé"); await refreshTrashList(); }
       else showToast("Erreur");
@@ -437,64 +784,181 @@ async function refreshTrashList(){
 async function showRecords(eventId, ev){
   const section = document.getElementById("recordsSection");
   section.innerHTML = `<div class="card center muted">Chargement des présences…</div>`;
-  const records = await loadRecords(eventId);
+  const [externes, autres, ratesData] = await Promise.all([loadExternes(eventId), loadAutres(eventId), getRates()]);
+
+  const byLeader = {};
+  externes.forEach(r=>{
+    const l = r.leader || "Non précisé";
+    if(!byLeader[l]) byLeader[l] = { count:0, tech:0, deco:0, remun:0, missing:0 };
+    byLeader[l].count++;
+    if(r.categorie==="Tech") byLeader[l].tech++; else byLeader[l].deco++;
+    const rate = (ratesData.rates[l]||{})[r.categorie];
+    if(rate!=null) byLeader[l].remun += Number(rate);
+    else byLeader[l].missing++;
+  });
+  let grandTotal = 0;
+  const recapRows = Object.keys(byLeader).map(l=>{
+    const d = byLeader[l];
+    const transport = d.count>0 ? Math.ceil(d.count/5)*2000 : 0;
+    const total = d.remun + transport;
+    grandTotal += total;
+    return `<tr><td>${esc(l)}</td><td>${d.count}</td><td>${d.tech}</td><td>${d.deco}</td><td>Rs ${d.remun.toLocaleString('fr-FR')}${d.missing? ` <span class="muted">(${d.missing} tarif manquant)</span>`:""}</td><td>Rs ${transport.toLocaleString('fr-FR')}</td><td><strong>Rs ${total.toLocaleString('fr-FR')}</strong></td></tr>`;
+  }).join("");
+
   section.innerHTML = `
     <div class="card">
       <h2>Présences — ${esc(ev.name)} (${fmtDateFR(ev.date)})</h2>
-      ${records.length===0 ? `<p class="muted">Aucune présence enregistrée pour cet événement.</p>` : `
-      <table>
-        <thead><tr><th>Nom</th><th>Prénom</th><th>Date</th><th>Signature</th><th>Arrivée</th><th>Départ</th><th></th></tr></thead>
-        <tbody id="recTable">
-          ${records.map(r => `
-            <tr data-key="${esc(r.id)}">
-              <td>${esc(r.nom)}</td><td>${esc(r.prenom)}</td><td>${fmtDateFR(r.date)}</td>
-              <td><img class="sig-thumb" src="${r.signature}" data-full="${r.signature}"></td>
-              <td><input type="time" value="${r.heureArrivee||''}" data-field="heureArrivee"></td>
-              <td><input type="time" value="${r.heureDepart||''}" data-field="heureDepart"></td>
-              <td><button class="btn-ghost btn-sm" data-save="${esc(r.id)}">Enreg.</button></td>
-            </tr>`).join("")}
+
+      <h3>Freelances externes</h3>
+      ${externes.length===0 ? `<p class="muted">Aucun freelance externe enregistré.</p>` : `
+      <table style="margin-bottom:16px;">
+        <thead><tr><th>Nom</th><th>Prénom</th><th>Catégorie</th><th>Chef d'équipe</th><th>Signature</th><th>Arrivée</th><th>Départ</th></tr></thead>
+        <tbody>
+          ${externes.map(r => `<tr><td>${esc(r.nom)}</td><td>${esc(r.prenom)}</td><td>${r.categorie==='Tech'?'Tech':'Déco'}</td><td>${esc(r.leader)}</td><td><img class="sig-thumb" src="${r.signature}"></td><td>${r.heureArrivee||''}</td><td>${r.heureDepart||''}</td></tr>`).join("")}
         </tbody>
+      </table>
+      <h3>Récapitulatif financier (Rs)</h3>
+      <table style="margin-bottom:16px;">
+        <thead><tr><th>Chef d'équipe</th><th>Pax</th><th>Tech</th><th>Déco</th><th>Rémunération</th><th>Transport</th><th>Total</th></tr></thead>
+        <tbody>${recapRows}</tbody>
+      </table>
+      <p class="muted">Total général : <strong>Rs ${grandTotal.toLocaleString('fr-FR')}</strong></p>
+      `}
+
+      <h3>Autre</h3>
+      ${autres.length===0 ? `<p class="muted">Aucun enregistrement.</p>` : `
+      <table style="margin-bottom:16px;">
+        <thead><tr><th>Nom</th><th>Prénom</th><th>Signature</th><th>Arrivée</th><th>Départ</th></tr></thead>
+        <tbody>${autres.map(r => `<tr><td>${esc(r.nom)}</td><td>${esc(r.prenom)}</td><td><img class="sig-thumb" src="${r.signature}"></td><td>${r.heureArrivee||''}</td><td>${r.heureDepart||''}</td></tr>`).join("")}</tbody>
       </table>`}
-      <div style="display:flex;gap:10px;margin-top:16px;flex-wrap:wrap;">
+
+      <div style="display:flex;gap:10px;margin-top:10px;flex-wrap:wrap;">
         <button class="btn-primary" id="exportBtn">Exporter en Excel</button>
         <a class="backlink" id="backBtn" style="align-self:center;">← Retour aux événements</a>
       </div>
     </div>`;
-  section.querySelectorAll("img.sig-thumb").forEach(img=>{ img.onclick=()=>openSigModal(img.dataset.full); });
-  section.querySelectorAll("[data-save]").forEach(btn=>{ btn.onclick=()=>saveRecordEdit(btn, records); });
-  document.getElementById("exportBtn").onclick = ()=> exportExcel(ev, records);
+
+  section.querySelectorAll("img.sig-thumb").forEach(img=>{ img.onclick=()=>openSigModal(img.src); });
+  document.getElementById("exportBtn").onclick = ()=> exportEventExcel(ev, externes, autres, recapRowsData(byLeader));
   document.getElementById("backBtn").onclick = ()=>{ section.innerHTML=""; };
 }
-
-async function saveRecordEdit(btn, records){
-  const tr = btn.closest("tr");
-  const key = tr.dataset.key;
-  let rec = records.find(r=>r.id===key) || await getRecord(key);
-  if(!rec){ showToast("Enregistrement introuvable"); return; }
-  tr.querySelectorAll("input[data-field]").forEach(inp=>{ rec[inp.dataset.field] = inp.value || null; });
-  const ok = await saveRecord(key, rec);
-  showToast(ok ? "Heures mises à jour" : "Erreur d'enregistrement");
+function recapRowsData(byLeader){
+  return Object.keys(byLeader).map(l=>{
+    const d=byLeader[l]; const transport = d.count>0?Math.ceil(d.count/5)*2000:0;
+    return { leader:l, count:d.count, tech:d.tech, deco:d.deco, remun:d.remun, transport, total:d.remun+transport };
+  });
 }
 
-function openSigModal(src){
-  const bg = document.createElement("div");
-  bg.className = "modal-bg";
-  bg.innerHTML = `<div class="modal"><img src="${src}" style="width:100%;background:#fff;border-radius:6px;"></div>`;
-  bg.onclick = ()=> bg.remove();
-  document.body.appendChild(bg);
-}
-
-function exportExcel(ev, records){
-  const data = records.map(r => ({
-    "Nom": r.nom, "Prénom": r.prenom, "Date": fmtDateFR(r.date),
-    "Signature": r.signature ? "Signée" : "—",
-    "Heure d'arrivée": r.heureArrivee || "", "Heure de départ": r.heureDepart || "",
-  }));
-  const ws = XLSX.utils.json_to_sheet(data);
-  ws['!cols'] = [{wch:16},{wch:16},{wch:12},{wch:10},{wch:14},{wch:14}];
+function exportEventExcel(ev, externes, autres, recap){
   const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, "Présences");
+  const wsExt = XLSX.utils.json_to_sheet(externes.map(r=>({ "Nom":r.nom,"Prénom":r.prenom,"Catégorie":r.categorie,"Chef d'équipe":r.leader,"Date":fmtDateFR(r.date),"Arrivée":r.heureArrivee||"","Départ":r.heureDepart||"" })));
+  XLSX.utils.book_append_sheet(wb, wsExt, "Freelances externes");
+  const wsRecap = XLSX.utils.json_to_sheet(recap.map(r=>({ "Chef d'équipe":r.leader,"Pax":r.count,"Tech":r.tech,"Déco":r.deco,"Rémunération (Rs)":r.remun,"Transport (Rs)":r.transport,"Total (Rs)":r.total })));
+  XLSX.utils.book_append_sheet(wb, wsRecap, "Récap financier");
+  const wsAutre = XLSX.utils.json_to_sheet(autres.map(r=>({ "Nom":r.nom,"Prénom":r.prenom,"Date":fmtDateFR(r.date),"Arrivée":r.heureArrivee||"","Départ":r.heureDepart||"" })));
+  XLSX.utils.book_append_sheet(wb, wsAutre, "Autre");
   XLSX.writeFile(wb, `presences-${slugify(ev.name)}.xlsx`);
+}
+
+// ---- Heures Staff & Freelance fixe (global, filtrable) ----
+async function refreshShiftsTable(){
+  const wrap = document.getElementById("shiftsTableWrap");
+  wrap.innerHTML = `<p class="muted">Chargement…</p>`;
+  let shifts = await loadAllShifts();
+  const fPJ = document.getElementById("filtPJ").value.trim().toUpperCase();
+  const fNom = slugify(document.getElementById("filtNom").value.trim());
+  const fPrenom = slugify(document.getElementById("filtPrenom").value.trim());
+  const fDateInput = document.getElementById("filtDate").value.trim();
+  const fDate = parseDateFR(fDateInput);
+  if(fPJ) shifts = shifts.filter(s=>s.pj===fPJ);
+  if(fNom) shifts = shifts.filter(s=>s.nomSlug.includes(fNom));
+  if(fPrenom) shifts = shifts.filter(s=>s.prenomSlug.includes(fPrenom));
+  if(fDate) shifts = shifts.filter(s=>s.date===fDate);
+  shifts.sort((a,b)=> (b.date+((b.heureDebut)||"")).localeCompare(a.date+((a.heureDebut)||"")));
+
+  if(shifts.length===0){ wrap.innerHTML = `<p class="muted">Aucun shift trouvé.</p>`; return; }
+  wrap.innerHTML = `
+    <table>
+      <thead><tr><th>PJ</th><th>Rôle</th><th>Nom</th><th>Prénom</th><th>Date</th><th>Début</th><th>Fin</th><th>Travaillé</th><th>Commentaire</th><th></th></tr></thead>
+      <tbody>
+        ${shifts.map(s=>{
+          const worked = s.heureFinJour ? hoursBetween(s.heureDebut,s.heureFinJour).toFixed(2)+"h" : "en cours";
+          return `<tr data-id="${s.id}">
+            <td>${esc(s.pj)}</td><td>${s.role==='staff'?'Staff':'Freelance fixe'}</td><td>${esc(s.nom)}</td><td>${esc(s.prenom)}</td><td>${fmtDateFR(s.date)}</td>
+            <td><input type="time" value="${s.heureDebut||''}" data-field="heureDebut"></td>
+            <td><input type="time" value="${s.heureFinJour||''}" data-field="heureFinJour"></td>
+            <td>${worked}${s.restWarning?' <span title="Repos < 12h depuis le shift précédent" class="muted">⚠︎</span>':''}</td>
+            <td><input type="text" value="${esc(s.commentaire||'')}" data-field="commentaire"></td>
+            <td><button class="btn-ghost btn-sm" data-save-shift="${s.id}">Enreg.</button></td>
+          </tr>`;
+        }).join("")}
+      </tbody>
+    </table>
+    <button class="btn-primary btn-sm" id="exportShiftsBtn" style="margin-top:14px;">Exporter en Excel</button>`;
+
+  wrap.querySelectorAll("[data-save-shift]").forEach(btn=>{
+    btn.onclick = async ()=>{
+      const tr = btn.closest("tr");
+      const fields = {};
+      tr.querySelectorAll("input[data-field]").forEach(inp=>{ fields[inp.dataset.field] = inp.value || null; });
+      const ok = await updateShiftDoc(btn.dataset.saveShift, fields);
+      showToast(ok ? "Heures mises à jour" : "Erreur d'enregistrement");
+    };
+  });
+  document.getElementById("exportShiftsBtn").onclick = ()=>{
+    const data = shifts.map(s=>({
+      "PJ":s.pj, "Rôle": s.role==='staff'?'Staff':'Freelance fixe', "Nom":s.nom, "Prénom":s.prenom, "Date":fmtDateFR(s.date),
+      "Début":s.heureDebut||"", "Fin":s.heureFinJour||"", "Travaillé (h)": s.heureFinJour?hoursBetween(s.heureDebut,s.heureFinJour).toFixed(2):"",
+      "Commentaire": s.commentaire||"", "Repos<12h": s.restWarning?"Oui":""
+    }));
+    const ws = XLSX.utils.json_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Heures");
+    XLSX.writeFile(wb, "heures-staff-freelance-fixe.xlsx");
+  };
+}
+
+// ---- Grille tarifaire ----
+async function refreshRatesPanel(){
+  const wrap = document.getElementById("ratesWrap");
+  const data = await getRates();
+  const leaders = data.leaders || DEFAULT_LEADERS;
+  wrap.innerHTML = `
+    <table>
+      <thead><tr><th>Chef d'équipe</th><th>Tech (Rs)</th><th>Déco (Rs)</th></tr></thead>
+      <tbody id="ratesBody">
+        ${leaders.map(l=>`<tr data-leader="${esc(l)}">
+          <td>${esc(l)}</td>
+          <td><input type="text" inputmode="numeric" data-rate="Tech" value="${(data.rates[l]&&data.rates[l].Tech!=null)?data.rates[l].Tech:''}"></td>
+          <td><input type="text" inputmode="numeric" data-rate="Deco" value="${(data.rates[l]&&data.rates[l].Deco!=null)?data.rates[l].Deco:''}"></td>
+        </tr>`).join("")}
+      </tbody>
+    </table>
+    <div style="display:flex;gap:10px;margin-top:14px;flex-wrap:wrap;">
+      <button class="btn-ghost btn-sm" id="addLeaderBtn">Ajouter un chef d'équipe</button>
+      <button class="btn-primary btn-sm" id="saveRatesBtn">Enregistrer la grille</button>
+    </div>`;
+  document.getElementById("addLeaderBtn").onclick = ()=>{
+    const name = prompt("Nom du chef d'équipe à ajouter :");
+    if(!name) return;
+    const tbody = document.getElementById("ratesBody");
+    const tr = document.createElement("tr"); tr.dataset.leader = name;
+    tr.innerHTML = `<td>${esc(name)}</td><td><input type="text" inputmode="numeric" data-rate="Tech"></td><td><input type="text" inputmode="numeric" data-rate="Deco"></td>`;
+    tbody.appendChild(tr);
+  };
+  document.getElementById("saveRatesBtn").onclick = async ()=>{
+    const rows = document.querySelectorAll("#ratesBody tr");
+    const newLeaders = []; const newRates = {};
+    rows.forEach(tr=>{
+      const l = tr.dataset.leader;
+      newLeaders.push(l);
+      const tech = tr.querySelector('[data-rate="Tech"]').value.trim();
+      const deco = tr.querySelector('[data-rate="Deco"]').value.trim();
+      newRates[l] = { Tech: tech===""?null:Number(tech), Deco: deco===""?null:Number(deco) };
+    });
+    const ok = await saveRates({ leaders:newLeaders, rates:newRates });
+    showToast(ok ? "Grille enregistrée" : "Erreur d'enregistrement");
+  };
 }
 
 render();
