@@ -297,10 +297,11 @@ async function endShift(pj,nom,prenom,heureFin,commentaire){
     const qToday = fs.query(fs.collection(db,"shifts"), fs.where("pj","==",pj), fs.where("nomSlug","==",nomSlug), fs.where("prenomSlug","==",prenomSlug), fs.where("date","==",date));
     const snapToday = await fs.getDocs(qToday);
     let totalWorked = 0;
-    snapToday.docs.forEach(d=>{ const s=d.data(); if(s.heureFinJour) totalWorked += hoursBetween(s.heureDebut, s.heureFinJour); });
+    let startedAt9 = false;
+    snapToday.docs.forEach(d=>{ const s=d.data(); if(s.heureFinJour) totalWorked += hoursBetween(s.heureDebut, s.heureFinJour); if(s.heureDebut && s.heureDebut<="09:00") startedAt9 = true; });
     const normal = normalHoursForDate(date);
     const recupToday = Math.max(0, totalWorked - normal);
-    const sundayBonus = isSundayISO(date) && totalWorked >= 8;
+    const sundayBonus = isSundayISO(date) && startedAt9;
 
     const project = await computeProjectRecup(pj,nom,prenom);
     pushToSheet("Shifts", { pj, nom, prenom, date, heureFin, commentaire, statut:"fin", totalWorked, recupToday, sundayBonus });
@@ -314,12 +315,17 @@ async function computeProjectRecup(pj,nom,prenom){
     const q = fs.query(fs.collection(db,"shifts"), fs.where("pj","==",pj), fs.where("nomSlug","==",nomSlug), fs.where("prenomSlug","==",prenomSlug));
     const snap = await fs.getDocs(q);
     const byDate = {};
-    snap.docs.forEach(d=>{ const s=d.data(); if(!s.heureFinJour) return; if(!byDate[s.date]) byDate[s.date]=0; byDate[s.date]+=hoursBetween(s.heureDebut,s.heureFinJour); });
+    snap.docs.forEach(d=>{
+      const s=d.data(); if(!s.heureFinJour) return;
+      if(!byDate[s.date]) byDate[s.date]={worked:0, startedAt9:false};
+      byDate[s.date].worked += hoursBetween(s.heureDebut,s.heureFinJour);
+      if(s.heureDebut && s.heureDebut<="09:00") byDate[s.date].startedAt9 = true;
+    });
     let totalRecup=0, bonusDays=0;
     Object.keys(byDate).forEach(date=>{
-      const worked = byDate[date], normal = normalHoursForDate(date);
+      const worked = byDate[date].worked, normal = normalHoursForDate(date);
       totalRecup += Math.max(0, worked-normal);
-      if(isSundayISO(date) && worked>=8) bonusDays++;
+      if(isSundayISO(date) && byDate[date].startedAt9) bonusDays++;
     });
     return { totalRecupHeures: totalRecup, joursBonus: bonusDays };
   }catch(e){ console.error(e); return { totalRecupHeures:0, joursBonus:0 }; }
@@ -577,7 +583,7 @@ function renderShiftEnd(ev, roleKey){
               <strong>Aujourd'hui</strong><br>
               Heures travaillées : ${res.totalWorked.toFixed(2)}h (normal : ${res.normal}h)<br>
               Récupération accumulée aujourd'hui : ${res.recupToday.toFixed(2)}h
-              ${res.sundayBonus ? "<br>+ 1 jour de récupération bonus (dimanche complet travaillé)" : ""}
+              ${res.sundayBonus ? "<br>+ 1 jour de récupération bonus (dimanche commencé à 9h)" : ""}
             </div>
           </div>`;
       renderSessionEnded(ev, nom, prenom, `${pj} — fin à ${heureFin}`, detailHtml);
